@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#050a14">
+<title>COLD WAR QUIZ — Guerra Fria & Nova Ordem Mundial</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --neon: #00f5ff;
+  --neon2: #ff00aa;
+  --gold: #ffd700;
+  --green: #00ff88;
+  --red: #ff3355;
+  --bg: #050a14;
+  --panel: rgba(0,20,40,0.85);
+  --border: rgba(0,245,255,0.25);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+body {
+  font-family: 'Rajdhani', sans-serif;
+  background: var(--bg);
+  color: #e0f4ff;
+  min-height: 100vh;
+  min-height: -webkit-fill-available;
+  overflow-x: hidden;
+  position: relative;
+  -webkit-text-size-adjust: 100%;
+  -webkit-font-smoothing: antialiased;
+  touch-action: manipulation;
+}
+
+/* ─── STARFIELD ─────────────────────────────────────────── */
+#stars { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
+.star { position: absolute; border-radius: 50%; animation: twinkle var(--d) ease-in-out infinite; }
+@keyframes twinkle { 0%,100%{opacity:.2;transform:scale(1)} 50%{opacity:1;transform:scale(1.4)} }
+
+/* ─── SCANLINES ─────────────────────────────────────────── */
+body::after {
+  content:''; position:fixed; inset:0; z-index:1; pointer-events:none;
+  background: repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.04) 2px,rgba(0,0,0,.04) 4px);
+}
+
+/* ─── LAYOUT ────────────────────────────────────────────── */
+#app { position: relative; z-index: 2; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding: max(20px, env(safe-area-inset-top)) 16px max(40px, env(safe-area-inset-bottom)) 16px; }
+
+/* ─── HUD BAR ───────────────────────────────────────────── */
+#hud {
+  width: 100%; max-width: 820px;
+  display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px 20px;
+  margin-bottom: 24px;
+  backdrop-filter: blur(8px);
+}
+
+.hud-block { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.hud-label { font-family:'Orbitron',monospace; font-size: 9px; letter-spacing: 3px; color: var(--neon); text-transform: uppercase; opacity: .7; }
+.hud-value { font-family:'Orbitron',monospace; font-size: 22px; font-weight: 900; color: #fff; text-shadow: 0 0 12px var(--neon); }
+#score-display { color: var(--gold); text-shadow: 0 0 16px var(--gold); }
+
+/* Lives */
+.lives-row { display: flex; gap: 4px; }
+.heart { font-size: 18px; transition: all .3s; }
+.heart.dead { filter: grayscale(1); opacity: .3; }
+
+/* Timer ring */
+#timer-wrap { position: relative; width: 52px; height: 52px; }
+#timer-svg { position: absolute; inset: 0; transform: rotate(-90deg); }
+#timer-bg { fill: none; stroke: rgba(0,245,255,.15); stroke-width: 4; }
+#timer-arc { fill: none; stroke: var(--neon); stroke-width: 4; stroke-linecap: round; stroke-dasharray: 138; stroke-dashoffset: 0; transition: stroke-dashoffset .9s linear, stroke .5s; }
+#timer-num { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-family:'Orbitron',monospace; font-size: 15px; font-weight: 900; color: #fff; }
+
+/* Combo */
+#combo-display { color: var(--neon2); text-shadow: 0 0 14px var(--neon2); transition: transform .2s; }
+#combo-display.pop { transform: scale(1.5); }
+
+/* ─── PROGRESS BAR ──────────────────────────────────────── */
+#progress-wrap { width:100%; max-width:820px; margin-bottom: 20px; }
+.prog-labels { display:flex; justify-content:space-between; font-size:12px; letter-spacing:2px; color: rgba(0,245,255,.6); margin-bottom:6px; font-family:'Orbitron',monospace; }
+.prog-track { height:6px; background:rgba(255,255,255,.07); border-radius:99px; overflow:hidden; }
+.prog-fill { height:100%; background: linear-gradient(90deg, var(--neon), var(--neon2)); border-radius:99px; transition: width .5s cubic-bezier(.4,0,.2,1); box-shadow: 0 0 12px var(--neon); }
+
+/* ─── SCREENS ───────────────────────────────────────────── */
+.screen { width: 100%; max-width: 820px; display: none; animation: fadeUp .5s ease; }
+.screen.active { display: block; }
+@keyframes fadeUp { from{opacity:0;transform:translateY(24px)} to{opacity:1;transform:translateY(0)} }
+
+/* ─── INTRO SCREEN ──────────────────────────────────────── */
+#intro { text-align: center; padding: 20px 0; }
+.game-logo { font-family: 'Orbitron', monospace; font-size: clamp(28px,6vw,58px); font-weight: 900; letter-spacing: 4px; line-height: 1.1;
+  background: linear-gradient(135deg, var(--neon), #fff 45%, var(--neon2));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  filter: drop-shadow(0 0 30px rgba(0,245,255,.5));
+  margin-bottom: 6px;
+}
+.game-sub { font-size: 13px; letter-spacing: 6px; color: rgba(0,245,255,.6); text-transform: uppercase; margin-bottom: 40px; font-family: 'Orbitron', monospace; }
+
+.intro-panel {
+  background: var(--panel); border: 1px solid var(--border); border-radius: 20px;
+  padding: 36px 40px; margin-bottom: 32px;
+  backdrop-filter: blur(10px);
+}
+.intro-panel h2 { font-family:'Orbitron',monospace; font-size:14px; letter-spacing:3px; color:var(--neon); margin-bottom: 24px; }
+
+.stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px,1fr)); gap: 16px; margin-bottom: 28px; }
+.stat-card { background: rgba(0,245,255,.05); border: 1px solid rgba(0,245,255,.15); border-radius: 12px; padding: 16px 12px; }
+.stat-card .val { font-family:'Orbitron',monospace; font-size:26px; font-weight:900; color: var(--gold); }
+.stat-card .lbl { font-size:11px; letter-spacing:2px; color: rgba(255,255,255,.5); text-transform:uppercase; margin-top:4px; }
+
+.rules { text-align:left; display:flex; flex-direction:column; gap:10px; }
+.rule { display:flex; align-items:center; gap:12px; font-size:15px; color: rgba(255,255,255,.8); }
+.rule-icon { font-size:20px; min-width:28px; text-align:center; }
+
+/* ─── BTN ───────────────────────────────────────────────── */
+.btn-neon {
+  display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+  font-family:'Orbitron',monospace; font-size:14px; font-weight:700; letter-spacing:3px;
+  padding: 18px 48px; border-radius: 12px; border: none; cursor: pointer;
+  background: linear-gradient(135deg, #003366, #005599);
+  color: var(--neon); text-shadow: 0 0 10px var(--neon);
+  box-shadow: 0 0 0 1px rgba(0,245,255,.4), 0 0 30px rgba(0,245,255,.2), inset 0 1px 0 rgba(0,245,255,.2);
+  transition: all .25s; position: relative; overflow: hidden;
+  -webkit-appearance: none; appearance: none; touch-action: manipulation;
+  min-height: 56px;
+}
+.btn-neon::before { content:''; position:absolute; inset:0; background: linear-gradient(135deg,rgba(0,245,255,.1),transparent); opacity:0; transition: opacity .25s; }
+.btn-neon:hover { transform:translateY(-3px); box-shadow: 0 0 0 1px rgba(0,245,255,.7), 0 0 50px rgba(0,245,255,.35), inset 0 1px 0 rgba(0,245,255,.3); }
+.btn-neon:hover::before { opacity:1; }
+.btn-neon:active { transform:translateY(0); }
+
+/* ─── QUESTION SCREEN ───────────────────────────────────── */
+#question-screen { }
+
+.q-header { margin-bottom: 20px; }
+.q-level { font-family:'Orbitron',monospace; font-size:10px; letter-spacing:4px; color: var(--neon2); text-transform:uppercase; margin-bottom: 8px; }
+.q-text {
+  background: var(--panel); border: 1px solid var(--border); border-radius: 16px;
+  padding: 24px 28px; font-size: 17px; font-weight: 600; line-height: 1.65; color: #d8eeff;
+  backdrop-filter: blur(8px);
+  border-left: 3px solid var(--neon);
+}
+
+.options-grid { display: flex; flex-direction: column; gap: 10px; margin-top: 20px; }
+
+.opt-btn {
+  display: flex; align-items: flex-start; gap: 14px;
+  background: rgba(0,15,35,.7); border: 1px solid rgba(0,245,255,.15);
+  border-radius: 12px; padding: 16px 18px; cursor: pointer;
+  font-family:'Rajdhani',sans-serif; font-size:15.5px; font-weight:600; color: rgba(255,255,255,.75);
+  text-align:left; transition: all .2s; position: relative; overflow: hidden;
+  width: 100%; min-height: 52px;
+  -webkit-appearance: none; appearance: none;
+  touch-action: manipulation;
+}
+.opt-btn::before { content:''; position:absolute; inset:0; background: linear-gradient(90deg, rgba(0,245,255,.08), transparent); opacity:0; transition: opacity .2s; }
+@media(hover:hover){
+  .opt-btn:hover:not(:disabled) { border-color: rgba(0,245,255,.5); color:#fff; transform:translateX(4px); box-shadow: 0 0 20px rgba(0,245,255,.1); }
+  .opt-btn:hover:not(:disabled)::before { opacity:1; }
+}
+.opt-btn:active:not(:disabled) { border-color: rgba(0,245,255,.5); color:#fff; background: rgba(0,245,255,.08); transform: scale(.98); }
+.opt-btn:disabled { cursor: default; }
+
+.opt-letter {
+  font-family:'Orbitron',monospace; font-size:12px; font-weight:700;
+  min-width:28px; height:28px; border-radius:8px;
+  display:flex; align-items:center; justify-content:center;
+  background: rgba(0,245,255,.1); color: var(--neon); flex-shrink:0; margin-top:1px;
+  border: 1px solid rgba(0,245,255,.2);
+  transition: all .2s;
+}
+
+.opt-btn.correct { background: rgba(0,255,136,.12); border-color: var(--green); color: var(--green); transform:translateX(0); }
+.opt-btn.correct .opt-letter { background: var(--green); color: #000; border-color: var(--green); }
+.opt-btn.wrong { background: rgba(255,51,85,.12); border-color: var(--red); color: var(--red); }
+.opt-btn.wrong .opt-letter { background: var(--red); color: #fff; border-color: var(--red); }
+
+/* Feedback flash */
+@keyframes correctFlash { 0%{box-shadow:0 0 0 rgba(0,255,136,0)} 30%{box-shadow:0 0 80px rgba(0,255,136,.6)} 100%{box-shadow:0 0 0 rgba(0,255,136,0)} }
+@keyframes wrongShake { 0%,100%{transform:translateX(0)} 20%,60%{transform:translateX(-8px)} 40%,80%{transform:translateX(8px)} }
+.flash-correct { animation: correctFlash .6s ease; }
+.flash-wrong { animation: wrongShake .4s ease; }
+
+/* ─── FEEDBACK POPUP ────────────────────────────────────── */
+#feedback-popup {
+  position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%) scale(0);
+  z-index: 100; background: var(--panel); border-radius: 20px; padding: 32px 48px;
+  text-align: center; backdrop-filter: blur(16px);
+  transition: transform .25s cubic-bezier(.34,1.56,.64,1);
+  pointer-events: none;
+  min-width: 280px;
+}
+#feedback-popup.show { transform: translate(-50%,-50%) scale(1); }
+#feedback-icon { font-size: 52px; margin-bottom: 8px; }
+#feedback-msg { font-family:'Orbitron',monospace; font-size:18px; font-weight:900; }
+#feedback-pts { font-size:14px; letter-spacing:2px; color: var(--gold); margin-top:6px; }
+
+/* ─── SCORE FLOAT ───────────────────────────────────────── */
+.score-float {
+  position: fixed; font-family:'Orbitron',monospace; font-size:24px; font-weight:900;
+  pointer-events:none; z-index:200; animation: floatUp .9s ease forwards;
+}
+@keyframes floatUp { 0%{opacity:1;transform:translateY(0) scale(1)} 100%{opacity:0;transform:translateY(-80px) scale(1.4)} }
+
+/* ─── PARTICLES ─────────────────────────────────────────── */
+.particle {
+  position:fixed; border-radius:50%; pointer-events:none; z-index:150;
+  animation: pExplode var(--pd) ease forwards;
+}
+@keyframes pExplode { 0%{opacity:1;transform:translate(0,0) scale(1)} 100%{opacity:0;transform:translate(var(--px),var(--py)) scale(0)} }
+
+/* ─── GAMEOVER / WIN SCREEN ─────────────────────────────── */
+#end-screen { text-align: center; padding: 20px 0; }
+.end-panel {
+  background: var(--panel); border: 1px solid var(--border); border-radius: 24px;
+  padding: 48px 40px; margin-bottom: 24px; backdrop-filter: blur(12px);
+}
+.end-icon { font-size: 72px; margin-bottom: 16px; display:block; }
+.end-title { font-family:'Orbitron',monospace; font-size:clamp(20px,5vw,36px); font-weight:900; margin-bottom:8px; }
+.end-title.win { background: linear-gradient(135deg, var(--gold), #fff, var(--neon)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+.end-title.lose { color: var(--red); text-shadow: 0 0 20px var(--red); }
+
+.end-score-big { font-family:'Orbitron',monospace; font-size:clamp(42px,10vw,80px); font-weight:900; color: var(--gold); text-shadow: 0 0 30px var(--gold); line-height:1; margin: 20px 0 8px; }
+.end-sub { font-size:13px; letter-spacing:3px; color: rgba(255,255,255,.5); text-transform:uppercase; margin-bottom:32px; }
+
+.result-grid { display:grid; grid-template-columns: repeat(3,1fr); gap:14px; margin-bottom:32px; }
+.result-card { background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.1); border-radius:12px; padding:16px 8px; }
+.result-card .rv { font-family:'Orbitron',monospace; font-size:22px; font-weight:900; color:#fff; }
+.result-card .rl { font-size:10px; letter-spacing:2px; color:rgba(255,255,255,.45); text-transform:uppercase; margin-top:4px; }
+
+.rank-badge { display:inline-block; padding:10px 28px; border-radius:99px; font-family:'Orbitron',monospace; font-size:13px; font-weight:700; letter-spacing:2px; margin-bottom:28px; }
+.rank-S { background:linear-gradient(135deg,#ffd700,#ff9500); color:#000; box-shadow:0 0 30px rgba(255,200,0,.5); }
+.rank-A { background:linear-gradient(135deg,#00f5ff,#0088cc); color:#000; box-shadow:0 0 20px rgba(0,245,255,.4); }
+.rank-B { background:linear-gradient(135deg,#00ff88,#009955); color:#000; }
+.rank-C { background:linear-gradient(135deg,#888,#555); color:#fff; }
+.rank-F { background:linear-gradient(135deg,#ff3355,#990022); color:#fff; }
+
+/* highscore */
+#highscore-table { margin-top:28px; }
+#highscore-table h3 { font-family:'Orbitron',monospace; font-size:11px; letter-spacing:3px; color:var(--neon); margin-bottom:12px; text-align:left; }
+.hs-row { display:flex; align-items:center; justify-content:space-between; padding:8px 12px; border-radius:8px; font-size:14px; }
+.hs-row:nth-child(odd){ background:rgba(255,255,255,.03); }
+.hs-row .hs-rank { font-family:'Orbitron',monospace; font-size:11px; color:var(--neon2); min-width:24px; }
+.hs-row .hs-pts { font-family:'Orbitron',monospace; font-size:14px; color:var(--gold); }
+
+/* ─── RESPONSIVE ────────────────────────────────────────── */
+@media(max-width:540px){
+  .hud-value{font-size:17px} .intro-panel{padding:24px 20px} .q-text{padding:18px 20px;font-size:15px}
+  .result-grid{grid-template-columns:repeat(3,1fr);gap:8px}
+  .end-panel{padding:32px 20px}
+  #timer-num{font-size:12px}
+  .hud-label{font-size:8px;letter-spacing:1px}
+  #hud{padding:10px 14px;gap:8px}
+  .opt-btn{font-size:14.5px;padding:14px 14px;gap:10px}
+}
+@media(max-width:360px){
+  .game-logo{font-size:24px}
+  .q-text{font-size:14px}
+  .opt-btn{font-size:13.5px}
+  .hud-value{font-size:15px}
+}
+</style>
+</head>
+<body>
+
+<!-- STARFIELD -->
+<canvas id="stars"></canvas>
+
+<div id="app">
+  <div id="hud" style="display:none">
+    <div class="hud-block">
+      <div class="hud-label">Score</div>
+      <div class="hud-value" id="score-display">0</div>
+    </div>
+    <div class="hud-block">
+      <div class="hud-label">Vidas</div>
+      <div class="lives-row" id="lives-row"></div>
+    </div>
+    <div class="hud-block" id="timer-wrap">
+      <svg id="timer-svg" viewBox="0 0 48 48" width="52" height="52">
+        <circle id="timer-bg" cx="24" cy="24" r="22"/>
+        <circle id="timer-arc" cx="24" cy="24" r="22"/>
+      </svg>
+      <div id="timer-num">30</div>
+    </div>
+    <div class="hud-block">
+      <div class="hud-label">Combo</div>
+      <div class="hud-value" id="combo-display">×1</div>
+    </div>
+    <div class="hud-block">
+      <div class="hud-label">Fase</div>
+      <div class="hud-value" id="level-display">1/20</div>
+    </div>
+  </div>
+
+  <div id="progress-wrap" style="display:none">
+    <div class="prog-labels">
+      <span id="prog-text">PROGRESSO</span>
+      <span id="prog-pct">0%</span>
+    </div>
+    <div class="prog-track"><div class="prog-fill" id="prog-fill" style="width:0%"></div></div>
+  </div>
+
+  <!-- INTRO -->
+  <div class="screen active" id="intro">
+    <div class="game-logo">COLD WAR<br>QUIZ</div>
+    <div class="game-sub">Guerra Fria &amp; Nova Ordem Mundial</div>
+    <div class="intro-panel">
+      <h2>// MISSÃO BRIEFING //</h2>
+      <div class="stats-grid">
+        <div class="stat-card"><div class="val">20</div><div class="lbl">Questões</div></div>
+        <div class="stat-card"><div class="val">3</div><div class="lbl">Vidas</div></div>
+        <div class="stat-card"><div class="val">120s</div><div class="lbl">Por fase</div></div>
+        <div class="stat-card"><div class="val">×5</div><div class="lbl">Combo max</div></div>
+      </div>
+      <div class="rules">
+        <div class="rule"><span class="rule-icon">⚡</span><span><b>+100 pts</b> por resposta certa × multiplicador de combo</span></div>
+        <div class="rule"><span class="rule-icon">⏱️</span><span><b>Bônus de tempo:</b> quanto mais rápido, mais pontos</span></div>
+        <div class="rule"><span class="rule-icon">🔥</span><span><b>Combo:</b> acertos consecutivos multiplicam seu score</span></div>
+        <div class="rule"><span class="rule-icon">❤️</span><span><b>3 vidas:</b> cada erro ou tempo esgotado custa 1 vida</span></div>
+        <div class="rule"><span class="rule-icon">🏆</span><span>Alcance rank <b>S</b> com 2000+ pontos!</span></div>
+      </div>
+    </div>
+    <button class="btn-neon" onclick="startGame()">▶ &nbsp;INICIAR MISSÃO</button>
+  </div>
+
+  <!-- QUESTION -->
+  <div class="screen" id="question-screen">
+    <div class="q-header">
+      <div class="q-level" id="q-level-label">NÍVEL 01 — GUERRA FRIA</div>
+      <div class="q-text" id="q-text"></div>
+    </div>
+    <div class="options-grid" id="options-grid"></div>
+  </div>
+
+  <!-- END -->
+  <div class="screen" id="end-screen">
+    <div class="end-panel">
+      <span class="end-icon" id="end-icon">🏆</span>
+      <div class="end-title" id="end-title">MISSÃO COMPLETA!</div>
+      <div class="end-score-big" id="end-score">0</div>
+      <div class="end-sub">PONTUAÇÃO FINAL</div>
+      <div id="rank-badge-wrap"></div>
+      <div class="result-grid">
+        <div class="result-card"><div class="rv" id="r-correct">0</div><div class="rl">Acertos</div></div>
+        <div class="result-card"><div class="rv" id="r-wrong">0</div><div class="rl">Erros</div></div>
+        <div class="result-card"><div class="rv" id="r-combo">×1</div><div class="rl">Combo Max</div></div>
+      </div>
+      <button class="btn-neon" onclick="restartGame()">↺ &nbsp;JOGAR NOVAMENTE</button>
+    </div>
+    <div id="highscore-table">
+      <h3>// MELHORES PONTUAÇÕES //</h3>
+      <div id="hs-list"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Feedback popup -->
+<div id="feedback-popup">
+  <div id="feedback-icon">✅</div>
+  <div id="feedback-msg">CORRETO!</div>
+  <div id="feedback-pts">+200 PTS</div>
+</div>
+
+<script>
+// ─── STARFIELD ────────────────────────────────────────────
+(function(){
+  const c=document.getElementById('stars'),ctx=c.getContext('2d');
+  function resize(){c.width=innerWidth;c.height=innerHeight;}
+  resize(); window.addEventListener('resize',resize);
+  const stars=Array.from({length:200},()=>({x:Math.random()*innerWidth,y:Math.random()*innerHeight,r:Math.random()*1.5+.3,a:Math.random(),da:(Math.random()*.005+.001)*(Math.random()<.5?1:-1)}));
+  function draw(){
+    ctx.clearRect(0,0,c.width,c.height);
+    stars.forEach(s=>{s.a=Math.max(.1,Math.min(1,s.a+s.da));if(s.a>=1||s.a<=.1)s.da*=-1;ctx.beginPath();ctx.arc(s.x,s.y,s.r,0,Math.PI*2);ctx.fillStyle=`rgba(180,220,255,${s.a})`;ctx.fill();});
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
+
+// ─── AUDIO ───────────────────────────────────────────────
+const AC = new (window.AudioContext || window.webkitAudioContext)();
+function playTone(freq,type,dur,vol=.25,delay=0){
+  const o=AC.createOscillator(),g=AC.createGain();
+  o.connect(g);g.connect(AC.destination);
+  o.type=type;o.frequency.setValueAtTime(freq,AC.currentTime+delay);
+  g.gain.setValueAtTime(vol,AC.currentTime+delay);
+  g.gain.exponentialRampToValueAtTime(.001,AC.currentTime+delay+dur);
+  o.start(AC.currentTime+delay);o.stop(AC.currentTime+delay+dur);
+}
+function sfxCorrect(){playTone(523,'sine',.12,.2);playTone(659,'sine',.12,.2,.12);playTone(784,'sine',.2,.2,.23);}
+function sfxWrong(){playTone(220,'sawtooth',.08,.15);playTone(180,'sawtooth',.25,.15,.08);}
+function sfxTick(){playTone(880,'square',.04,.05);}
+function sfxGameOver(){[180,160,140].forEach((f,i)=>playTone(f,'sawtooth',.3,.15,i*.15));}
+function sfxWin(){[523,659,784,1047].forEach((f,i)=>playTone(f,'sine',.2,.2,i*.12));}
+function sfxCombo(){playTone(1046,'sine',.08,.15);playTone(1318,'sine',.15,.15,.09);}
+function unlockAudio(){AC.resume().catch(()=>{});}
+document.addEventListener('touchstart',unlockAudio,{once:true,passive:true});
+document.addEventListener('click',unlockAudio,{once:true});
+
+// ─── DATA ─────────────────────────────────────────────────
+const QUESTIONS=[
+  {text:"A Guerra Fria foi um conflito que opôs as duas superpotências vencedoras da Segunda Guerra Mundial. Qual foi a principal característica que a diferenciou de outros conflitos?",opts:["Envolveu batalhas navais em todos os oceanos.","Foi um conflito direto e declarado entre EUA e URSS em território europeu.","Caracterizou-se pela disputa ideológica, tecnológica e geopolítica sem confronto militar direto entre as superpotências.","Limitou-se a disputas comerciais entre blocos econômicos.","Foi resolvido rapidamente por um tratado de paz em 1950."],ans:2,cat:"GUERRA FRIA"},
+  {text:"A Doutrina Truman, proclamada em 1947, estabelecia que os EUA deveriam:",opts:["Apoiar economicamente a reconstrução da Europa por meio do Plano Marshall exclusivamente.","Evitar qualquer intervenção nos assuntos políticos de outros países.","Conter o avanço do comunismo, prestando apoio a países ameaçados pela expansão soviética.","Criar uma aliança militar com a China para enfrentar a URSS.","Retirar suas tropas da Europa e concentrá-las na Ásia."],ans:2,cat:"DOUTRINA TRUMAN"},
+  {text:"O Plano Marshall (1948) foi uma iniciativa norte-americana voltada para:",opts:["Financiar a corrida armamentista dos países aliados da OTAN.","Reconstruir economicamente a Europa Ocidental após a Segunda Guerra Mundial, impedindo a expansão comunista.","Criar uma moeda única europeia para concorrer com o rublo soviético.","Financiar a independência das colônias africanas e asiáticas.","Estabelecer bases militares dos EUA em todo o continente europeu."],ans:1,cat:"PLANO MARSHALL"},
+  {text:"A chamada 'Corrida Espacial', travada durante a Guerra Fria, teve como marco inicial:",opts:["O envio do primeiro homem à Lua pelos EUA em 1969.","O lançamento do foguete V-2 pela Alemanha Nazista em 1944.","O lançamento do satélite soviético Sputnik em 1957, que gerou grande impacto no Ocidente.","A criação da NASA pelos EUA em 1945.","O primeiro voo espacial tripulado norte-americano com Alan Shepard."],ans:2,cat:"CORRIDA ESPACIAL"},
+  {text:"A Crise dos Mísseis de Cuba (1962) é considerada o momento de maior tensão da Guerra Fria porque:",opts:["Resultou em uma guerra convencional entre EUA e URSS no Caribe.","O mundo chegou muito próximo de um conflito nuclear, com mísseis soviéticos instalados a 90 milhas dos EUA.","Cuba declarou guerra formal aos Estados Unidos com apoio soviético.","Os EUA bombardearam bases militares soviéticas em Cuba.","A ONU interveio militarmente para impedir o conflito."],ans:1,cat:"CRISE DE CUBA"},
+  {text:"Sobre a OTAN e o Pacto de Varsóvia, é correto afirmar que:",opts:["Ambas as alianças foram criadas antes do término da Segunda Guerra Mundial.","A OTAN reunia países socialistas liderados pela URSS, enquanto o Pacto de Varsóvia era liderado pelos EUA.","A OTAN era uma aliança militar ocidental liderada pelos EUA, e o Pacto de Varsóvia era uma aliança militar dos países socialistas liderada pela URSS.","As duas organizações coexistiram pacificamente sem qualquer tensão.","O Brasil foi membro fundador da OTAN em 1949."],ans:2,cat:"OTAN & PACTO DE VARSÓVIA"},
+  {text:"A Política de Détente, implementada na década de 1970, representou:",opts:["A declaração formal do fim da Guerra Fria pelos líderes das superpotências.","Um período de relaxamento das tensões entre EUA e URSS, com acordos de limitação de armamentos como o SALT I.","Uma intensificação dos conflitos armados na América Latina e na Ásia.","A fusão das economias capitalista e socialista em um sistema único.","O início da corrida armamentista nuclear entre as superpotências."],ans:1,cat:"DÉTENTE"},
+  {text:"A queda do Muro de Berlim, em 1989, simbolizou:",opts:["A reunificação da Coreia do Norte e do Sul.","A vitória militar dos EUA sobre a URSS em território europeu.","O esgotamento do modelo soviético e o início do colapso do bloco socialista na Europa Oriental.","A criação da União Europeia como organismo supranacional.","A independência da Alemanha Oriental em relação à URSS."],ans:2,cat:"MURO DE BERLIM"},
+  {text:"A dissolução da URSS, ocorrida em dezembro de 1991, teve como consequência direta:",opts:["A criação de um único Estado europeu unificado sob liderança russa.","O surgimento de 15 repúblicas independentes e o fim da bipolaridade mundial.","A transferência imediata do arsenal nuclear soviético para os EUA.","A formação de um bloco militar liderado pela China como substituto do Pacto de Varsóvia.","A incorporação dos países socialistas ao bloco capitalista sem conflitos."],ans:1,cat:"FIM DA URSS"},
+  {text:"O conceito de 'Nova Ordem Mundial', consolidado após 1991, caracteriza-se principalmente por:",opts:["Uma ordem bipolar em que China e EUA dividem o poder mundial de forma equilibrada.","Um mundo multipolar em que a ONU possui poder absoluto sobre os Estados nacionais.","A hegemonia dos EUA como única superpotência, em um mundo unipolar marcado pela globalização.","O retorno ao modelo de equilíbrio de poder do século XIX, com impérios coloniais.","A substituição das nações-Estado por blocos regionais com exércitos próprios."],ans:2,cat:"NOVA ORDEM MUNDIAL"},
+  {text:"Os atentados de 11 de setembro de 2001 impactaram diretamente a Nova Ordem Mundial porque:",opts:["Levaram à criação da União Europeia como bloco de defesa coletiva.","Fizeram os EUA se retirarem definitivamente do Oriente Médio.","Redefiniram o conceito de segurança global, com os EUA declarando a 'Guerra ao Terror' e intervindo militarmente no Afeganistão e no Iraque.","Provocaram uma aliança militar permanente entre EUA, Rússia e China.","Resultaram na extinção da OTAN e na criação de uma força militar da ONU."],ans:2,cat:"11 DE SETEMBRO"},
+  {text:"A ascensão de potências emergentes como China, Índia, Brasil e Rússia no século XXI indica uma tendência de:",opts:["Retorno à Guerra Fria com novos atores no lugar de EUA e URSS.","Consolidação definitiva da hegemonia norte-americana sem contestações.","Transição para uma ordem mundial multipolar, com redistribuição do poder geopolítico e econômico global.","Extinção dos organismos internacionais como ONU e OMC.","Uniformização cultural e econômica de todas as nações sob um único modelo."],ans:2,cat:"MULTIPOLARIDADE"},
+  {text:"A Guerra da Coreia (1950–1953) é considerada um conflito típico da Guerra Fria porque:",opts:["Foi travada exclusivamente entre Coreia do Norte e Coreia do Sul sem qualquer intervenção externa.","Representou um confronto indireto entre EUA e URSS/China, com as superpotências apoiando lados opostos sem se enfrentarem diretamente.","Resultou na reunificação definitiva da Península Coreana sob governo democrático.","Foi o único conflito armado do período em que a ONU atuou como força de ocupação permanente.","Terminou com a vitória da Coreia do Norte e a retirada total das tropas norte-americanas da Ásia."],ans:1,cat:"GUERRA DA COREIA"},
+  {text:"A Revolução Cubana de 1959, liderada por Fidel Castro e Che Guevara, teve como consequência imediata:",opts:["A instauração de uma monarquia constitucional em Cuba com apoio dos EUA.","A integração de Cuba ao bloco capitalista liderado pelos Estados Unidos.","A derrubada da ditadura de Fulgêncio Batista e a implantação de um regime socialista a apenas 90 milhas dos EUA, gerando enorme tensão geopolítica.","A realização de eleições livres e democráticas que legitimaram o governo revolucionário internacionalmente.","A criação de uma república federativa com autonomia dos estados cubanos."],ans:2,cat:"REVOLUÇÃO CUBANA"},
+  {text:"A Revolução Chinesa de 1949, liderada por Mao Tsé-Tung, proclamou a República Popular da China após:",opts:["A derrota do Japão na Segunda Guerra Mundial e a rendição das forças imperiais ao Partido Comunista.","A vitória do Partido Comunista sobre as forças nacionalistas do Kuomintang de Chiang Kai-shek, que se refugiaram em Taiwan.","Um referendo popular realizado com supervisão da ONU que aprovou o modelo socialista.","A invasão soviética do território chinês e a imposição do regime comunista por Stálin.","A rendição voluntária do imperador chinês ao movimento comunista após negociações diplomáticas."],ans:1,cat:"REVOLUÇÃO CHINESA"},
+  {text:"A queda do Muro de Berlim, em 9 de novembro de 1989, foi consequência direta de:",opts:["Uma invasão militar da OTAN ao território da Alemanha Oriental.","Um acordo secreto entre Reagan e Gorbachev que determinou a demolição imediata do muro.","O acúmulo de pressões internas no bloco soviético, as reformas da Glasnost e Perestroika de Gorbachev e as manifestações populares que exigiram a abertura das fronteiras.","A vitória eleitoral de um partido pró-unificação nas eleições da Alemanha Oriental realizadas em 1988.","A intervenção direta da ONU que determinou o fim da divisão alemã como condição para novos acordos comerciais."],ans:2,cat:"MURO DE BERLIM"},
+  {text:"O neoliberalismo econômico, difundido globalmente a partir da década de 1980 pelos governos de Margaret Thatcher (Reino Unido) e Ronald Reagan (EUA), defendia:",opts:["A ampliação do Estado de Bem-Estar Social com maior investimento público em saúde, educação e previdência.","A nacionalização das grandes empresas estratégicas para garantir soberania econômica nacional.","A redução do papel do Estado na economia, com privatizações, desregulamentação dos mercados, abertura comercial e corte de gastos públicos.","A criação de blocos econômicos fechados para proteger as economias nacionais da concorrência externa.","O fortalecimento de sindicatos e movimentos trabalhistas como motor do desenvolvimento econômico."],ans:2,cat:"NEOLIBERALISMO"},
+  {text:"O desmembramento da URSS, concluído em dezembro de 1991, foi acelerado principalmente por:",opts:["Uma guerra civil generalizada entre as 15 repúblicas soviéticas que tornou inviável a manutenção da união.","Uma invasão militar coordenada pela OTAN que obrigou Gorbachev a dissolver o Estado soviético.","A combinação entre a crise econômica soviética, os movimentos nacionalistas nas repúblicas, o fracasso das reformas de Gorbachev e a perda de legitimidade do Partido Comunista após o golpe frustrado de agosto de 1991.","A decisão unilateral do Parlamento Russo, liderado por Boris Iéltsin, de expulsar as demais repúblicas da federação.","Um referendo pan-soviético no qual a maioria da população votou pelo fim da URSS e pela independência das repúblicas."],ans:2,cat:"FIM DA URSS"},
+  {text:"A Nova Ordem Mundial pós-Guerra Fria foi marcada pelo surgimento de novos conflitos regionais. Qual fenômeno melhor explica esse aumento de instabilidade?",opts:["A corrida armamentista nuclear entre EUA e Rússia intensificou conflitos por procuração em todo o mundo.","Com o fim da bipolaridade, emergiram conflitos étnicos, religiosos e nacionalistas antes contidos pela lógica da Guerra Fria, como nas guerras da Iugoslávia e nos genocídios africanos.","A ONU tornou-se mais poderosa e passou a intervir militarmente em todos os conflitos regionais sem autorização dos países envolvidos.","Os EUA e a Rússia dividiram o mundo em zonas de influência exclusiva, gerando disputas territoriais sistemáticas.","A globalização econômica eliminou as fronteiras nacionais, criando disputas por recursos naturais entre blocos regionais."],ans:1,cat:"NOVA ORDEM MUNDIAL"},
+  {text:"A aceleração da globalização a partir dos anos 1990 foi impulsionada por um conjunto de fatores. Qual alternativa os sintetiza corretamente?",opts:["O fortalecimento de barreiras alfandegárias e a criação de blocos econômicos fechados que estimularam o comércio intrarregional.","A revolução tecnológica da internet, a liberalização do comércio internacional com acordos como o GATT/OMC, a desregulamentação financeira e a queda do bloco socialista, que integraram mercados, culturas e fluxos de capital em escala planetária.","A hegemonia cultural dos países emergentes, que exportaram seus modelos de consumo para as nações desenvolvidas.","A criação de uma moeda global única que eliminou as barreiras cambiais e unificou os sistemas financeiros nacionais.","A migração em massa de trabalhadores entre os países desenvolvidos e em desenvolvimento como principal motor da integração econômica global."],ans:1,cat:"GLOBALIZAÇÃO"}
+];
+
+// ─── STATE ────────────────────────────────────────────────
+let score=0,lives=3,combo=1,maxCombo=1,qi=0,timer=120,timerInterval=null,answered=false,correct=0,wrong=0;
+const TIMER_MAX=120, BASE_PTS=100, CIRC=138;
+
+// ─── SCREENS ─────────────────────────────────────────────
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>{s.classList.remove('active');});
+  document.getElementById(id).classList.add('active');
+}
+
+// ─── START ───────────────────────────────────────────────
+function startGame(){
+  score=0;lives=3;combo=1;maxCombo=1;qi=0;correct=0;wrong=0;
+  document.getElementById('hud').style.display='flex';
+  document.getElementById('progress-wrap').style.display='block';
+  updateHUD();
+  showScreen('question-screen');
+  loadQuestion();
+}
+
+// ─── HUD ─────────────────────────────────────────────────
+function updateHUD(){
+  document.getElementById('score-display').textContent=score.toLocaleString();
+  document.getElementById('combo-display').textContent='×'+combo;
+  document.getElementById('level-display').textContent=(qi+1)+'/20';
+  // lives
+  const lr=document.getElementById('lives-row');
+  lr.innerHTML='';
+  for(let i=0;i<3;i++){const h=document.createElement('span');h.className='heart'+(i>=lives?' dead':'');h.textContent='❤️';lr.appendChild(h);}
+  // progress
+  const pct=Math.round((qi/20)*100);
+  document.getElementById('prog-fill').style.width=pct+'%';
+  document.getElementById('prog-pct').textContent=pct+'%';
+}
+
+// ─── LOAD QUESTION ───────────────────────────────────────
+function loadQuestion(){
+  if(qi>=QUESTIONS.length){endGame(true);return;}
+  answered=false;
+  const q=QUESTIONS[qi];
+  document.getElementById('q-level-label').textContent=`NÍVEL ${String(qi+1).padStart(2,'0')} — ${q.cat}`;
+  document.getElementById('q-text').textContent=q.text;
+  const grid=document.getElementById('options-grid');
+  grid.innerHTML='';
+  q.opts.forEach((opt,i)=>{
+    const btn=document.createElement('button');
+    btn.className='opt-btn';
+    btn.innerHTML=`<span class="opt-letter">${'ABCDE'[i]}</span><span>${opt}</span>`;
+    btn.onclick=()=>pick(i,btn);
+    grid.appendChild(btn);
+  });
+  updateHUD();
+  startTimer();
+  // entrance animation
+  const qs=document.getElementById('question-screen');
+  qs.style.animation='none';requestAnimationFrame(()=>{qs.style.animation='fadeUp .4s ease';});
+}
+
+// ─── TIMER ───────────────────────────────────────────────
+function startTimer(){
+  clearInterval(timerInterval);
+  timer=TIMER_MAX;
+  updateTimerUI();
+  timerInterval=setInterval(()=>{
+    timer--;
+    if(timer<=15&&timer>0)sfxTick();
+    updateTimerUI();
+    if(timer<=0){clearInterval(timerInterval);timeOut();}
+  },1000);
+}
+function updateTimerUI(){
+  const pct=timer/TIMER_MAX;
+  const offset=CIRC*(1-pct);
+  const arc=document.getElementById('timer-arc');
+  arc.style.strokeDashoffset=offset;
+  arc.style.stroke=timer>40?'var(--neon)':timer>20?'var(--gold)':'var(--red)';
+  document.getElementById('timer-num').textContent=timer;
+}
+function timeOut(){
+  if(answered)return;
+  answered=true;
+  loseLife();
+  showFeedback(false,'TEMPO ESGOTADO!',0);
+  highlightCorrect();
+  disableOptions();
+  setTimeout(nextQuestion,1800);
+}
+
+// ─── PICK ANSWER ─────────────────────────────────────────
+function pick(idx,btn){
+  if(answered)return;
+  AC.resume();
+  answered=true;
+  clearInterval(timerInterval);
+  const q=QUESTIONS[qi];
+  disableOptions();
+  if(idx===q.ans){
+    const timePts=Math.round((timer/TIMER_MAX)*50);
+    const pts=(BASE_PTS+timePts)*combo;
+    score+=pts;
+    correct++;
+    btn.classList.add('correct');
+    combo=Math.min(5,combo+1);
+    maxCombo=Math.max(maxCombo,combo);
+    sfxCorrect();
+    if(combo>=3)sfxCombo();
+    spawnParticles(btn);
+    showFloatScore('+'+pts,btn,'var(--gold)');
+    showFeedback(true,'CORRETO!',pts);
+    document.getElementById('question-screen').classList.add('flash-correct');
+    setTimeout(()=>document.getElementById('question-screen').classList.remove('flash-correct'),600);
+  } else {
+    btn.classList.add('wrong');
+    highlightCorrect();
+    combo=1;
+    wrong++;
+    loseLife();
+    sfxWrong();
+    showFeedback(false,'INCORRETO!',0);
+    document.getElementById('question-screen').classList.add('flash-wrong');
+    setTimeout(()=>document.getElementById('question-screen').classList.remove('flash-wrong'),400);
+  }
+  updateHUD();
+  popCombo();
+  setTimeout(()=>{hideFeedback();nextQuestion();},1600);
+}
+
+function highlightCorrect(){
+  const btns=document.querySelectorAll('.opt-btn');
+  btns[QUESTIONS[qi].ans].classList.add('correct');
+}
+function disableOptions(){document.querySelectorAll('.opt-btn').forEach(b=>b.disabled=true);}
+
+function loseLife(){
+  lives--;
+  if(lives<=0){setTimeout(()=>endGame(false),1800);}
+}
+
+// ─── NEXT ────────────────────────────────────────────────
+function nextQuestion(){
+  qi++;
+  if(lives<=0){endGame(false);return;}
+  loadQuestion();
+}
+
+// ─── FEEDBACK POPUP ──────────────────────────────────────
+function showFeedback(ok,msg,pts){
+  const p=document.getElementById('feedback-popup');
+  document.getElementById('feedback-icon').textContent=ok?'⭐':'💥';
+  document.getElementById('feedback-msg').textContent=msg;
+  document.getElementById('feedback-msg').style.color=ok?'var(--green)':'var(--red)';
+  document.getElementById('feedback-pts').textContent=pts>0?'+'+pts+' PTS':'';
+  p.style.borderColor=ok?'rgba(0,255,136,.3)':'rgba(255,51,85,.3)';
+  p.classList.add('show');
+}
+function hideFeedback(){document.getElementById('feedback-popup').classList.remove('show');}
+
+// ─── FLOAT SCORE ─────────────────────────────────────────
+function showFloatScore(txt,refEl,color){
+  const rect=refEl.getBoundingClientRect();
+  const el=document.createElement('div');
+  el.className='score-float';
+  el.textContent=txt;
+  el.style.cssText=`color:${color};left:${rect.left+rect.width/2-30}px;top:${rect.top-10}px;`;
+  document.body.appendChild(el);
+  el.addEventListener('animationend',()=>el.remove());
+}
+
+// ─── PARTICLES ───────────────────────────────────────────
+function spawnParticles(el){
+  const rect=el.getBoundingClientRect();
+  const cx=rect.left+rect.width/2, cy=rect.top+rect.height/2;
+  const colors=['var(--neon)','var(--gold)','var(--neon2)','var(--green)','#fff'];
+  for(let i=0;i<22;i++){
+    const p=document.createElement('div');
+    const angle=Math.random()*Math.PI*2, dist=60+Math.random()*80;
+    const px=Math.cos(angle)*dist+'px', py=Math.sin(angle)*dist+'px';
+    const size=3+Math.random()*5;
+    p.className='particle';
+    p.style.cssText=`width:${size}px;height:${size}px;background:${colors[i%colors.length]};left:${cx}px;top:${cy}px;--px:${px};--py:${py};--pd:${.4+Math.random()*.5}s;`;
+    document.body.appendChild(p);
+    p.addEventListener('animationend',()=>p.remove());
+  }
+}
+
+// ─── COMBO POP ───────────────────────────────────────────
+function popCombo(){
+  const el=document.getElementById('combo-display');
+  el.classList.remove('pop');
+  void el.offsetWidth;
+  el.classList.add('pop');
+  setTimeout(()=>el.classList.remove('pop'),200);
+}
+
+// ─── END GAME ────────────────────────────────────────────
+function endGame(won){
+  clearInterval(timerInterval);
+  document.getElementById('hud').style.display='none';
+  document.getElementById('progress-wrap').style.display='none';
+  if(won)sfxWin(); else sfxGameOver();
+  document.getElementById('end-icon').textContent=won?'🏆':'💀';
+  const titleEl=document.getElementById('end-title');
+  titleEl.textContent=won?'MISSÃO COMPLETA!':'GAME OVER';
+  titleEl.className='end-title '+(won?'win':'lose');
+  document.getElementById('end-score').textContent=score.toLocaleString();
+  document.getElementById('r-correct').textContent=correct;
+  document.getElementById('r-wrong').textContent=wrong+(3-lives);
+  document.getElementById('r-combo').textContent='×'+maxCombo;
+  // rank
+  let rank,rClass;
+  if(score>=2200){rank='S';rClass='rank-S';}
+  else if(score>=1700){rank='A';rClass='rank-A';}
+  else if(score>=1200){rank='B';rClass='rank-B';}
+  else if(score>=700){rank='C';rClass='rank-C';}
+  else{rank='F';rClass='rank-F';}
+  document.getElementById('rank-badge-wrap').innerHTML=`<span class="rank-badge ${rClass}">RANK ${rank}</span>`;
+  // highscore
+  saveHS();
+  showHS();
+  showScreen('end-screen');
+}
+
+// ─── HIGHSCORES ──────────────────────────────────────────
+function saveHS(){
+  let hs=JSON.parse(localStorage.getItem('cwqHS')||'[]');
+  hs.push({pts:score,date:new Date().toLocaleDateString('pt-BR'),correct});
+  hs.sort((a,b)=>b.pts-a.pts);
+  hs=hs.slice(0,5);
+  localStorage.setItem('cwqHS',JSON.stringify(hs));
+}
+function showHS(){
+  const hs=JSON.parse(localStorage.getItem('cwqHS')||'[]');
+  const medals=['🥇','🥈','🥉','4️⃣','5️⃣'];
+  document.getElementById('hs-list').innerHTML=hs.map((h,i)=>`
+    <div class="hs-row"><span class="hs-rank">${medals[i]}</span><span>${h.date} — ${h.correct}/20 corretas</span><span class="hs-pts">${h.pts.toLocaleString()}</span></div>
+  `).join('')||'<div style="opacity:.4;font-size:13px;padding:8px">Nenhum recorde ainda.</div>';
+}
+
+// ─── RESTART ─────────────────────────────────────────────
+function restartGame(){
+  showScreen('intro');
+}
+</script>
+</body>
+</html>
