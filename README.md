@@ -1,4 +1,5 @@
-[simulado_game.html](https://github.com/user-attachments/files/25716102/simulado_game.html)
+[s[simulado_game (2).html](https://github.com/user-attachments/files/25723602/simulado_game.2.html)
+imulado_game.html](https://github.com/user-attachments/files/25716102/simulado_game.html)
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
