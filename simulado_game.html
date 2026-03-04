@@ -4,673 +4,389 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="theme-color" content="#050a14">
-<title>COLD WAR QUIZ — Guerra Fria & Nova Ordem Mundial</title>
+<meta name="theme-color" content="#050814">
+<title>COSMOS QUIZ — Terra, Lua & Universo</title>
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-:root {
-  --neon: #00f5ff;
-  --neon2: #ff00aa;
-  --gold: #ffd700;
-  --green: #00ff88;
-  --red: #ff3355;
-  --bg: #050a14;
-  --panel: rgba(0,20,40,0.85);
-  --border: rgba(0,245,255,0.25);
-}
-
-* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-
-body {
-  font-family: 'Rajdhani', sans-serif;
-  background: var(--bg);
-  color: #e0f4ff;
-  min-height: 100vh;
-  min-height: -webkit-fill-available;
-  overflow-x: hidden;
-  position: relative;
-  -webkit-text-size-adjust: 100%;
-  -webkit-font-smoothing: antialiased;
-  touch-action: manipulation;
-}
-
-/* ─── STARFIELD ─────────────────────────────────────────── */
-#stars { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
-.star { position: absolute; border-radius: 50%; animation: twinkle var(--d) ease-in-out infinite; }
-@keyframes twinkle { 0%,100%{opacity:.2;transform:scale(1)} 50%{opacity:1;transform:scale(1.4)} }
-
-/* ─── SCANLINES ─────────────────────────────────────────── */
-body::after {
-  content:''; position:fixed; inset:0; z-index:1; pointer-events:none;
-  background: repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.04) 2px,rgba(0,0,0,.04) 4px);
-}
-
-/* ─── LAYOUT ────────────────────────────────────────────── */
-#app { position: relative; z-index: 2; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding: max(20px, env(safe-area-inset-top)) 16px max(40px, env(safe-area-inset-bottom)) 16px; }
-
-/* ─── HUD BAR ───────────────────────────────────────────── */
-#hud {
-  width: 100%; max-width: 820px;
-  display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;
-  background: var(--panel);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 12px 20px;
-  margin-bottom: 24px;
-  backdrop-filter: blur(8px);
-}
-
-.hud-block { display: flex; flex-direction: column; align-items: center; gap: 2px; }
-.hud-label { font-family:'Orbitron',monospace; font-size: 9px; letter-spacing: 3px; color: var(--neon); text-transform: uppercase; opacity: .7; }
-.hud-value { font-family:'Orbitron',monospace; font-size: 22px; font-weight: 900; color: #fff; text-shadow: 0 0 12px var(--neon); }
-#score-display { color: var(--gold); text-shadow: 0 0 16px var(--gold); }
-
-/* Lives */
-.lives-row { display: flex; gap: 4px; }
-.heart { font-size: 18px; transition: all .3s; }
-.heart.dead { filter: grayscale(1); opacity: .3; }
-
-/* Timer ring */
-#timer-wrap { position: relative; width: 52px; height: 52px; }
-#timer-svg { position: absolute; inset: 0; transform: rotate(-90deg); }
-#timer-bg { fill: none; stroke: rgba(0,245,255,.15); stroke-width: 4; }
-#timer-arc { fill: none; stroke: var(--neon); stroke-width: 4; stroke-linecap: round; stroke-dasharray: 138; stroke-dashoffset: 0; transition: stroke-dashoffset .9s linear, stroke .5s; }
-#timer-num { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-family:'Orbitron',monospace; font-size: 15px; font-weight: 900; color: #fff; }
-
-/* Combo */
-#combo-display { color: var(--neon2); text-shadow: 0 0 14px var(--neon2); transition: transform .2s; }
-#combo-display.pop { transform: scale(1.5); }
-
-/* ─── PROGRESS BAR ──────────────────────────────────────── */
-#progress-wrap { width:100%; max-width:820px; margin-bottom: 20px; }
-.prog-labels { display:flex; justify-content:space-between; font-size:12px; letter-spacing:2px; color: rgba(0,245,255,.6); margin-bottom:6px; font-family:'Orbitron',monospace; }
-.prog-track { height:6px; background:rgba(255,255,255,.07); border-radius:99px; overflow:hidden; }
-.prog-fill { height:100%; background: linear-gradient(90deg, var(--neon), var(--neon2)); border-radius:99px; transition: width .5s cubic-bezier(.4,0,.2,1); box-shadow: 0 0 12px var(--neon); }
-
-/* ─── SCREENS ───────────────────────────────────────────── */
-.screen { width: 100%; max-width: 820px; display: none; animation: fadeUp .5s ease; }
-.screen.active { display: block; }
-@keyframes fadeUp { from{opacity:0;transform:translateY(24px)} to{opacity:1;transform:translateY(0)} }
-
-/* ─── INTRO SCREEN ──────────────────────────────────────── */
-#intro { text-align: center; padding: 20px 0; }
-.game-logo { font-family: 'Orbitron', monospace; font-size: clamp(28px,6vw,58px); font-weight: 900; letter-spacing: 4px; line-height: 1.1;
-  background: linear-gradient(135deg, var(--neon), #fff 45%, var(--neon2));
-  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
-  filter: drop-shadow(0 0 30px rgba(0,245,255,.5));
-  margin-bottom: 6px;
-}
-.game-sub { font-size: 13px; letter-spacing: 6px; color: rgba(0,245,255,.6); text-transform: uppercase; margin-bottom: 40px; font-family: 'Orbitron', monospace; }
-
-.intro-panel {
-  background: var(--panel); border: 1px solid var(--border); border-radius: 20px;
-  padding: 36px 40px; margin-bottom: 32px;
-  backdrop-filter: blur(10px);
-}
-.intro-panel h2 { font-family:'Orbitron',monospace; font-size:14px; letter-spacing:3px; color:var(--neon); margin-bottom: 24px; }
-
-.stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px,1fr)); gap: 16px; margin-bottom: 28px; }
-.stat-card { background: rgba(0,245,255,.05); border: 1px solid rgba(0,245,255,.15); border-radius: 12px; padding: 16px 12px; }
-.stat-card .val { font-family:'Orbitron',monospace; font-size:26px; font-weight:900; color: var(--gold); }
-.stat-card .lbl { font-size:11px; letter-spacing:2px; color: rgba(255,255,255,.5); text-transform:uppercase; margin-top:4px; }
-
-.rules { text-align:left; display:flex; flex-direction:column; gap:10px; }
-.rule { display:flex; align-items:center; gap:12px; font-size:15px; color: rgba(255,255,255,.8); }
-.rule-icon { font-size:20px; min-width:28px; text-align:center; }
-
-/* ─── BTN ───────────────────────────────────────────────── */
-.btn-neon {
-  display: inline-flex; align-items: center; justify-content: center; gap: 10px;
-  font-family:'Orbitron',monospace; font-size:14px; font-weight:700; letter-spacing:3px;
-  padding: 18px 48px; border-radius: 12px; border: none; cursor: pointer;
-  background: linear-gradient(135deg, #003366, #005599);
-  color: var(--neon); text-shadow: 0 0 10px var(--neon);
-  box-shadow: 0 0 0 1px rgba(0,245,255,.4), 0 0 30px rgba(0,245,255,.2), inset 0 1px 0 rgba(0,245,255,.2);
-  transition: all .25s; position: relative; overflow: hidden;
-  -webkit-appearance: none; appearance: none; touch-action: manipulation;
-  min-height: 56px;
-}
-.btn-neon::before { content:''; position:absolute; inset:0; background: linear-gradient(135deg,rgba(0,245,255,.1),transparent); opacity:0; transition: opacity .25s; }
-.btn-neon:hover { transform:translateY(-3px); box-shadow: 0 0 0 1px rgba(0,245,255,.7), 0 0 50px rgba(0,245,255,.35), inset 0 1px 0 rgba(0,245,255,.3); }
-.btn-neon:hover::before { opacity:1; }
-.btn-neon:active { transform:translateY(0); }
-
-/* ─── QUESTION SCREEN ───────────────────────────────────── */
-#question-screen { }
-
-.q-header { margin-bottom: 20px; }
-.q-level { font-family:'Orbitron',monospace; font-size:10px; letter-spacing:4px; color: var(--neon2); text-transform:uppercase; margin-bottom: 8px; }
-.q-text {
-  background: var(--panel); border: 1px solid var(--border); border-radius: 16px;
-  padding: 24px 28px; font-size: 17px; font-weight: 600; line-height: 1.65; color: #d8eeff;
-  backdrop-filter: blur(8px);
-  border-left: 3px solid var(--neon);
-}
-
-.options-grid { display: flex; flex-direction: column; gap: 10px; margin-top: 20px; }
-
-.opt-btn {
-  display: flex; align-items: flex-start; gap: 14px;
-  background: rgba(0,15,35,.7); border: 1px solid rgba(0,245,255,.15);
-  border-radius: 12px; padding: 16px 18px; cursor: pointer;
-  font-family:'Rajdhani',sans-serif; font-size:15.5px; font-weight:600; color: rgba(255,255,255,.75);
-  text-align:left; transition: all .2s; position: relative; overflow: hidden;
-  width: 100%; min-height: 52px;
-  -webkit-appearance: none; appearance: none;
-  touch-action: manipulation;
-}
-.opt-btn::before { content:''; position:absolute; inset:0; background: linear-gradient(90deg, rgba(0,245,255,.08), transparent); opacity:0; transition: opacity .2s; }
-@media(hover:hover){
-  .opt-btn:hover:not(:disabled) { border-color: rgba(0,245,255,.5); color:#fff; transform:translateX(4px); box-shadow: 0 0 20px rgba(0,245,255,.1); }
-  .opt-btn:hover:not(:disabled)::before { opacity:1; }
-}
-.opt-btn:active:not(:disabled) { border-color: rgba(0,245,255,.5); color:#fff; background: rgba(0,245,255,.08); transform: scale(.98); }
-.opt-btn:disabled { cursor: default; }
-
-.opt-letter {
-  font-family:'Orbitron',monospace; font-size:12px; font-weight:700;
-  min-width:28px; height:28px; border-radius:8px;
-  display:flex; align-items:center; justify-content:center;
-  background: rgba(0,245,255,.1); color: var(--neon); flex-shrink:0; margin-top:1px;
-  border: 1px solid rgba(0,245,255,.2);
-  transition: all .2s;
-}
-
-.opt-btn.correct { background: rgba(0,255,136,.12); border-color: var(--green); color: var(--green); transform:translateX(0); }
-.opt-btn.correct .opt-letter { background: var(--green); color: #000; border-color: var(--green); }
-.opt-btn.wrong { background: rgba(255,51,85,.12); border-color: var(--red); color: var(--red); }
-.opt-btn.wrong .opt-letter { background: var(--red); color: #fff; border-color: var(--red); }
-
-/* Feedback flash */
-@keyframes correctFlash { 0%{box-shadow:0 0 0 rgba(0,255,136,0)} 30%{box-shadow:0 0 80px rgba(0,255,136,.6)} 100%{box-shadow:0 0 0 rgba(0,255,136,0)} }
-@keyframes wrongShake { 0%,100%{transform:translateX(0)} 20%,60%{transform:translateX(-8px)} 40%,80%{transform:translateX(8px)} }
-.flash-correct { animation: correctFlash .6s ease; }
-.flash-wrong { animation: wrongShake .4s ease; }
-
-/* ─── FEEDBACK POPUP ────────────────────────────────────── */
-#feedback-popup {
-  position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%) scale(0);
-  z-index: 100; background: var(--panel); border-radius: 20px; padding: 32px 48px;
-  text-align: center; backdrop-filter: blur(16px);
-  transition: transform .25s cubic-bezier(.34,1.56,.64,1);
-  pointer-events: none;
-  min-width: 280px;
-}
-#feedback-popup.show { transform: translate(-50%,-50%) scale(1); }
-#feedback-icon { font-size: 52px; margin-bottom: 8px; }
-#feedback-msg { font-family:'Orbitron',monospace; font-size:18px; font-weight:900; }
-#feedback-pts { font-size:14px; letter-spacing:2px; color: var(--gold); margin-top:6px; }
-
-/* ─── SCORE FLOAT ───────────────────────────────────────── */
-.score-float {
-  position: fixed; font-family:'Orbitron',monospace; font-size:24px; font-weight:900;
-  pointer-events:none; z-index:200; animation: floatUp .9s ease forwards;
-}
-@keyframes floatUp { 0%{opacity:1;transform:translateY(0) scale(1)} 100%{opacity:0;transform:translateY(-80px) scale(1.4)} }
-
-/* ─── PARTICLES ─────────────────────────────────────────── */
-.particle {
-  position:fixed; border-radius:50%; pointer-events:none; z-index:150;
-  animation: pExplode var(--pd) ease forwards;
-}
-@keyframes pExplode { 0%{opacity:1;transform:translate(0,0) scale(1)} 100%{opacity:0;transform:translate(var(--px),var(--py)) scale(0)} }
-
-/* ─── GAMEOVER / WIN SCREEN ─────────────────────────────── */
-#end-screen { text-align: center; padding: 20px 0; }
-.end-panel {
-  background: var(--panel); border: 1px solid var(--border); border-radius: 24px;
-  padding: 48px 40px; margin-bottom: 24px; backdrop-filter: blur(12px);
-}
-.end-icon { font-size: 72px; margin-bottom: 16px; display:block; }
-.end-title { font-family:'Orbitron',monospace; font-size:clamp(20px,5vw,36px); font-weight:900; margin-bottom:8px; }
-.end-title.win { background: linear-gradient(135deg, var(--gold), #fff, var(--neon)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
-.end-title.lose { color: var(--red); text-shadow: 0 0 20px var(--red); }
-
-.end-score-big { font-family:'Orbitron',monospace; font-size:clamp(42px,10vw,80px); font-weight:900; color: var(--gold); text-shadow: 0 0 30px var(--gold); line-height:1; margin: 20px 0 8px; }
-.end-sub { font-size:13px; letter-spacing:3px; color: rgba(255,255,255,.5); text-transform:uppercase; margin-bottom:32px; }
-
-.result-grid { display:grid; grid-template-columns: repeat(3,1fr); gap:14px; margin-bottom:32px; }
-.result-card { background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.1); border-radius:12px; padding:16px 8px; }
-.result-card .rv { font-family:'Orbitron',monospace; font-size:22px; font-weight:900; color:#fff; }
-.result-card .rl { font-size:10px; letter-spacing:2px; color:rgba(255,255,255,.45); text-transform:uppercase; margin-top:4px; }
-
-.rank-badge { display:inline-block; padding:10px 28px; border-radius:99px; font-family:'Orbitron',monospace; font-size:13px; font-weight:700; letter-spacing:2px; margin-bottom:28px; }
-.rank-S { background:linear-gradient(135deg,#ffd700,#ff9500); color:#000; box-shadow:0 0 30px rgba(255,200,0,.5); }
-.rank-A { background:linear-gradient(135deg,#00f5ff,#0088cc); color:#000; box-shadow:0 0 20px rgba(0,245,255,.4); }
-.rank-B { background:linear-gradient(135deg,#00ff88,#009955); color:#000; }
-.rank-C { background:linear-gradient(135deg,#888,#555); color:#fff; }
-.rank-F { background:linear-gradient(135deg,#ff3355,#990022); color:#fff; }
-
-/* highscore */
-#highscore-table { margin-top:28px; }
-#highscore-table h3 { font-family:'Orbitron',monospace; font-size:11px; letter-spacing:3px; color:var(--neon); margin-bottom:12px; text-align:left; }
-.hs-row { display:flex; align-items:center; justify-content:space-between; padding:8px 12px; border-radius:8px; font-size:14px; }
-.hs-row:nth-child(odd){ background:rgba(255,255,255,.03); }
-.hs-row .hs-rank { font-family:'Orbitron',monospace; font-size:11px; color:var(--neon2); min-width:24px; }
-.hs-row .hs-pts { font-family:'Orbitron',monospace; font-size:14px; color:var(--gold); }
-
-/* ─── RESPONSIVE ────────────────────────────────────────── */
-@media(max-width:540px){
-  .hud-value{font-size:17px} .intro-panel{padding:24px 20px} .q-text{padding:18px 20px;font-size:15px}
-  .result-grid{grid-template-columns:repeat(3,1fr);gap:8px}
-  .end-panel{padding:32px 20px}
-  #timer-num{font-size:12px}
-  .hud-label{font-size:8px;letter-spacing:1px}
-  #hud{padding:10px 14px;gap:8px}
-  .opt-btn{font-size:14.5px;padding:14px 14px;gap:10px}
-}
-@media(max-width:360px){
-  .game-logo{font-size:24px}
-  .q-text{font-size:14px}
-  .opt-btn{font-size:13.5px}
-  .hud-value{font-size:15px}
-}
+:root{--neon:#a78bfa;--neon2:#f59e0b;--gold:#fde68a;--green:#34d399;--red:#f87171;--bg:#050814;--panel:rgba(10,8,30,0.88);--border:rgba(167,139,250,0.25);}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+body{font-family:'Rajdhani',sans-serif;background:var(--bg);color:#e8e0ff;min-height:100vh;overflow-x:hidden;-webkit-font-smoothing:antialiased;touch-action:manipulation;}
+body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;background:radial-gradient(ellipse 80% 60% at 20% 30%,rgba(88,28,220,.18) 0%,transparent 60%),radial-gradient(ellipse 60% 50% at 80% 70%,rgba(245,158,11,.10) 0%,transparent 55%);}
+body::after{content:'';position:fixed;inset:0;z-index:1;pointer-events:none;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.03) 2px,rgba(0,0,0,.03) 4px);}
+canvas#stars{position:fixed;inset:0;z-index:0;pointer-events:none;}
+#app{position:relative;z-index:2;min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:max(20px,env(safe-area-inset-top)) 16px max(40px,env(safe-area-inset-bottom));}
+#hud{width:100%;max-width:820px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:12px 20px;margin-bottom:24px;backdrop-filter:blur(8px);}
+.hud-block{display:flex;flex-direction:column;align-items:center;gap:2px;}
+.hud-label{font-family:'Orbitron',monospace;font-size:9px;letter-spacing:3px;color:var(--neon);text-transform:uppercase;opacity:.7;}
+.hud-value{font-family:'Orbitron',monospace;font-size:22px;font-weight:900;color:#fff;text-shadow:0 0 12px var(--neon);}
+#score-display{color:var(--gold);text-shadow:0 0 16px var(--gold);}
+.lives-row{display:flex;gap:4px;}
+.heart{font-size:18px;transition:all .3s;}
+.heart.dead{filter:grayscale(1);opacity:.3;}
+#timer-wrap{position:relative;width:52px;height:52px;}
+#timer-svg{position:absolute;inset:0;transform:rotate(-90deg);}
+#timer-bg{fill:none;stroke:rgba(167,139,250,.15);stroke-width:4;}
+#timer-arc{fill:none;stroke:var(--neon);stroke-width:4;stroke-linecap:round;stroke-dasharray:138;stroke-dashoffset:0;transition:stroke-dashoffset .9s linear,stroke .5s;}
+#timer-num{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:'Orbitron',monospace;font-size:15px;font-weight:900;color:#fff;}
+#combo-display{color:var(--neon2);text-shadow:0 0 14px var(--neon2);transition:transform .2s;}
+#combo-display.pop{transform:scale(1.5);}
+#progress-wrap{width:100%;max-width:820px;margin-bottom:20px;}
+.prog-labels{display:flex;justify-content:space-between;font-size:12px;letter-spacing:2px;color:rgba(167,139,250,.6);margin-bottom:6px;font-family:'Orbitron',monospace;}
+.prog-track{height:6px;background:rgba(255,255,255,.07);border-radius:99px;overflow:hidden;}
+.prog-fill{height:100%;background:linear-gradient(90deg,var(--neon),var(--neon2));border-radius:99px;transition:width .5s;box-shadow:0 0 12px var(--neon);}
+.screen{width:100%;max-width:820px;display:none;animation:fadeUp .5s ease;}
+.screen.active{display:block;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
+#intro{text-align:center;padding:20px 0;}
+.game-logo{font-family:'Orbitron',monospace;font-size:clamp(28px,6vw,54px);font-weight:900;letter-spacing:4px;line-height:1.1;background:linear-gradient(135deg,#c4b5fd,#fff 45%,#fde68a);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;filter:drop-shadow(0 0 30px rgba(167,139,250,.6));margin-bottom:6px;}
+.game-sub{font-size:13px;letter-spacing:5px;color:rgba(167,139,250,.6);text-transform:uppercase;margin-bottom:40px;font-family:'Orbitron',monospace;}
+.intro-panel{background:var(--panel);border:1px solid var(--border);border-radius:20px;padding:36px 40px;margin-bottom:32px;backdrop-filter:blur(10px);}
+.intro-panel h2{font-family:'Orbitron',monospace;font-size:14px;letter-spacing:3px;color:var(--neon);margin-bottom:24px;}
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:16px;margin-bottom:28px;}
+.stat-card{background:rgba(167,139,250,.05);border:1px solid rgba(167,139,250,.15);border-radius:12px;padding:16px 12px;}
+.stat-card .val{font-family:'Orbitron',monospace;font-size:26px;font-weight:900;color:var(--gold);}
+.stat-card .lbl{font-size:11px;letter-spacing:2px;color:rgba(255,255,255,.5);text-transform:uppercase;margin-top:4px;}
+.rules{text-align:left;display:flex;flex-direction:column;gap:10px;}
+.rule{display:flex;align-items:center;gap:12px;font-size:15px;color:rgba(255,255,255,.8);}
+.rule-icon{font-size:20px;min-width:28px;text-align:center;}
+.btn-neon{display:inline-flex;align-items:center;justify-content:center;gap:10px;font-family:'Orbitron',monospace;font-size:14px;font-weight:700;letter-spacing:3px;padding:18px 48px;border-radius:12px;border:none;cursor:pointer;background:linear-gradient(135deg,#1e1060,#3b1fa8);color:var(--neon);text-shadow:0 0 10px var(--neon);box-shadow:0 0 0 1px rgba(167,139,250,.4),0 0 30px rgba(167,139,250,.2);transition:all .25s;min-height:56px;-webkit-appearance:none;touch-action:manipulation;}
+.btn-neon:active{transform:scale(.97);}
+.q-header{margin-bottom:20px;}
+.q-level{font-family:'Orbitron',monospace;font-size:10px;letter-spacing:4px;color:var(--neon2);text-transform:uppercase;margin-bottom:8px;}
+.q-text{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:24px 28px;font-size:17px;font-weight:600;line-height:1.65;color:#ddd6fe;backdrop-filter:blur(8px);border-left:3px solid var(--neon);}
+.options-grid{display:flex;flex-direction:column;gap:10px;margin-top:20px;}
+.opt-btn{display:flex;align-items:flex-start;gap:14px;background:rgba(5,3,25,.7);border:1px solid rgba(167,139,250,.15);border-radius:12px;padding:16px 18px;cursor:pointer;font-family:'Rajdhani',sans-serif;font-size:15.5px;font-weight:600;color:rgba(255,255,255,.75);text-align:left;transition:all .2s;width:100%;min-height:52px;-webkit-appearance:none;touch-action:manipulation;}
+@media(hover:hover){.opt-btn:hover:not(:disabled){border-color:rgba(167,139,250,.5);color:#fff;transform:translateX(4px);}}
+.opt-btn:active:not(:disabled){transform:scale(.98);}
+.opt-btn:disabled{cursor:default;}
+.opt-letter{font-family:'Orbitron',monospace;font-size:12px;font-weight:700;min-width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;background:rgba(167,139,250,.1);color:var(--neon);flex-shrink:0;margin-top:1px;border:1px solid rgba(167,139,250,.2);transition:all .2s;}
+.opt-btn.correct{background:rgba(52,211,153,.12);border-color:var(--green);color:var(--green);}
+.opt-btn.correct .opt-letter{background:var(--green);color:#000;border-color:var(--green);}
+.opt-btn.wrong{background:rgba(248,113,113,.12);border-color:var(--red);color:var(--red);}
+.opt-btn.wrong .opt-letter{background:var(--red);color:#fff;border-color:var(--red);}
+@keyframes correctFlash{0%{box-shadow:0 0 0 rgba(52,211,153,0)}30%{box-shadow:0 0 80px rgba(52,211,153,.6)}100%{box-shadow:0 0 0 rgba(52,211,153,0)}}
+@keyframes wrongShake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-8px)}40%,80%{transform:translateX(8px)}}
+.flash-correct{animation:correctFlash .6s ease;}
+.flash-wrong{animation:wrongShake .4s ease;}
+#feedback-popup{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(0);z-index:100;background:var(--panel);border-radius:20px;padding:32px 48px;text-align:center;backdrop-filter:blur(16px);transition:transform .25s cubic-bezier(.34,1.56,.64,1);pointer-events:none;min-width:280px;border:1px solid transparent;}
+#feedback-popup.show{transform:translate(-50%,-50%) scale(1);}
+#feedback-icon{font-size:52px;margin-bottom:8px;}
+#feedback-msg{font-family:'Orbitron',monospace;font-size:18px;font-weight:900;}
+#feedback-pts{font-size:14px;letter-spacing:2px;color:var(--gold);margin-top:6px;}
+.score-float{position:fixed;font-family:'Orbitron',monospace;font-size:24px;font-weight:900;pointer-events:none;z-index:200;animation:floatUp .9s ease forwards;}
+@keyframes floatUp{0%{opacity:1;transform:translateY(0) scale(1)}100%{opacity:0;transform:translateY(-80px) scale(1.4)}}
+.particle{position:fixed;border-radius:50%;pointer-events:none;z-index:150;animation:pExplode var(--pd) ease forwards;}
+@keyframes pExplode{0%{opacity:1;transform:translate(0,0) scale(1)}100%{opacity:0;transform:translate(var(--px),var(--py)) scale(0)}}
+#end-screen{text-align:center;padding:20px 0;}
+.end-panel{background:var(--panel);border:1px solid var(--border);border-radius:24px;padding:48px 40px;margin-bottom:24px;backdrop-filter:blur(12px);}
+.end-icon{font-size:72px;margin-bottom:16px;display:block;}
+.end-title{font-family:'Orbitron',monospace;font-size:clamp(20px,5vw,36px);font-weight:900;margin-bottom:8px;}
+.end-title.win{background:linear-gradient(135deg,var(--gold),#fff,var(--neon));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.end-title.lose{color:var(--red);text-shadow:0 0 20px var(--red);}
+.end-score-big{font-family:'Orbitron',monospace;font-size:clamp(42px,10vw,80px);font-weight:900;color:var(--gold);text-shadow:0 0 30px var(--gold);line-height:1;margin:20px 0 8px;}
+.end-sub{font-size:13px;letter-spacing:3px;color:rgba(255,255,255,.5);text-transform:uppercase;margin-bottom:32px;}
+.result-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:32px;}
+.result-card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:16px 8px;}
+.result-card .rv{font-family:'Orbitron',monospace;font-size:22px;font-weight:900;color:#fff;}
+.result-card .rl{font-size:10px;letter-spacing:2px;color:rgba(255,255,255,.45);text-transform:uppercase;margin-top:4px;}
+.rank-badge{display:inline-block;padding:10px 28px;border-radius:99px;font-family:'Orbitron',monospace;font-size:13px;font-weight:700;letter-spacing:2px;margin-bottom:28px;}
+.rank-S{background:linear-gradient(135deg,#fde68a,#f59e0b);color:#000;box-shadow:0 0 30px rgba(245,158,11,.5);}
+.rank-A{background:linear-gradient(135deg,#c4b5fd,#7c3aed);color:#fff;box-shadow:0 0 20px rgba(167,139,250,.5);}
+.rank-B{background:linear-gradient(135deg,#34d399,#059669);color:#000;}
+.rank-C{background:linear-gradient(135deg,#888,#555);color:#fff;}
+.rank-F{background:linear-gradient(135deg,#f87171,#991b1b);color:#fff;}
+#highscore-table{margin-top:28px;}
+#highscore-table h3{font-family:'Orbitron',monospace;font-size:11px;letter-spacing:3px;color:var(--neon);margin-bottom:12px;text-align:left;}
+.hs-row{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;border-radius:8px;font-size:14px;}
+.hs-row:nth-child(odd){background:rgba(255,255,255,.03);}
+.hs-rank{font-family:'Orbitron',monospace;font-size:11px;color:var(--neon2);min-width:24px;}
+.hs-pts{font-family:'Orbitron',monospace;font-size:14px;color:var(--gold);}
+@media(max-width:540px){.hud-value{font-size:17px}.intro-panel{padding:24px 20px}.q-text{padding:18px 20px;font-size:15px}.end-panel{padding:32px 20px}.opt-btn{font-size:14px;padding:13px 14px}}
+@media(max-width:360px){.game-logo{font-size:24px}.q-text{font-size:14px}.hud-value{font-size:14px}}
 </style>
 </head>
 <body>
-
-<!-- STARFIELD -->
 <canvas id="stars"></canvas>
-
 <div id="app">
   <div id="hud" style="display:none">
-    <div class="hud-block">
-      <div class="hud-label">Score</div>
-      <div class="hud-value" id="score-display">0</div>
-    </div>
-    <div class="hud-block">
-      <div class="hud-label">Vidas</div>
-      <div class="lives-row" id="lives-row"></div>
-    </div>
+    <div class="hud-block"><div class="hud-label">Score</div><div class="hud-value" id="score-display">0</div></div>
+    <div class="hud-block"><div class="hud-label">Vidas</div><div class="lives-row" id="lives-row"></div></div>
     <div class="hud-block" id="timer-wrap">
       <svg id="timer-svg" viewBox="0 0 48 48" width="52" height="52">
         <circle id="timer-bg" cx="24" cy="24" r="22"/>
         <circle id="timer-arc" cx="24" cy="24" r="22"/>
       </svg>
-      <div id="timer-num">30</div>
+      <div id="timer-num">120</div>
     </div>
-    <div class="hud-block">
-      <div class="hud-label">Combo</div>
-      <div class="hud-value" id="combo-display">×1</div>
-    </div>
-    <div class="hud-block">
-      <div class="hud-label">Fase</div>
-      <div class="hud-value" id="level-display">1/20</div>
-    </div>
+    <div class="hud-block"><div class="hud-label">Combo</div><div class="hud-value" id="combo-display">x1</div></div>
+    <div class="hud-block"><div class="hud-label">Fase</div><div class="hud-value" id="level-display">1/25</div></div>
   </div>
-
   <div id="progress-wrap" style="display:none">
-    <div class="prog-labels">
-      <span id="prog-text">PROGRESSO</span>
-      <span id="prog-pct">0%</span>
-    </div>
+    <div class="prog-labels"><span>PROGRESSO</span><span id="prog-pct">0%</span></div>
     <div class="prog-track"><div class="prog-fill" id="prog-fill" style="width:0%"></div></div>
   </div>
-
-  <!-- INTRO -->
   <div class="screen active" id="intro">
-    <div class="game-logo">COLD WAR<br>QUIZ</div>
-    <div class="game-sub">Guerra Fria &amp; Nova Ordem Mundial</div>
+    <div class="game-logo">COSMOS<br>QUIZ</div>
+    <div class="game-sub">Terra, Lua &amp; Universo</div>
     <div class="intro-panel">
-      <h2>// MISSÃO BRIEFING //</h2>
+      <h2>// MISSAO BRIEFING //</h2>
       <div class="stats-grid">
-        <div class="stat-card"><div class="val">20</div><div class="lbl">Questões</div></div>
+        <div class="stat-card"><div class="val">25</div><div class="lbl">Questoes</div></div>
         <div class="stat-card"><div class="val">3</div><div class="lbl">Vidas</div></div>
         <div class="stat-card"><div class="val">120s</div><div class="lbl">Por fase</div></div>
-        <div class="stat-card"><div class="val">×5</div><div class="lbl">Combo max</div></div>
+        <div class="stat-card"><div class="val">x5</div><div class="lbl">Combo max</div></div>
       </div>
       <div class="rules">
-        <div class="rule"><span class="rule-icon">⚡</span><span><b>+100 pts</b> por resposta certa × multiplicador de combo</span></div>
-        <div class="rule"><span class="rule-icon">⏱️</span><span><b>Bônus de tempo:</b> quanto mais rápido, mais pontos</span></div>
+        <div class="rule"><span class="rule-icon">⚡</span><span><b>+100 pts</b> por resposta certa x multiplicador de combo</span></div>
+        <div class="rule"><span class="rule-icon">⏱️</span><span><b>Bonus de tempo:</b> quanto mais rapido, mais pontos</span></div>
         <div class="rule"><span class="rule-icon">🔥</span><span><b>Combo:</b> acertos consecutivos multiplicam seu score</span></div>
         <div class="rule"><span class="rule-icon">❤️</span><span><b>3 vidas:</b> cada erro ou tempo esgotado custa 1 vida</span></div>
-        <div class="rule"><span class="rule-icon">🏆</span><span>Alcance rank <b>S</b> com 2000+ pontos!</span></div>
+        <div class="rule"><span class="rule-icon">🚀</span><span>Alcance rank <b>S</b> com 2800+ pontos!</span></div>
       </div>
     </div>
-    <button class="btn-neon" onclick="startGame()">▶ &nbsp;INICIAR MISSÃO</button>
+    <button class="btn-neon" onclick="startGame()">🚀 INICIAR MISSAO</button>
   </div>
-
-  <!-- QUESTION -->
   <div class="screen" id="question-screen">
     <div class="q-header">
-      <div class="q-level" id="q-level-label">NÍVEL 01 — GUERRA FRIA</div>
+      <div class="q-level" id="q-level-label">NIVEL 01</div>
       <div class="q-text" id="q-text"></div>
     </div>
     <div class="options-grid" id="options-grid"></div>
   </div>
-
-  <!-- END -->
   <div class="screen" id="end-screen">
     <div class="end-panel">
       <span class="end-icon" id="end-icon">🏆</span>
-      <div class="end-title" id="end-title">MISSÃO COMPLETA!</div>
+      <div class="end-title" id="end-title">MISSAO COMPLETA!</div>
       <div class="end-score-big" id="end-score">0</div>
-      <div class="end-sub">PONTUAÇÃO FINAL</div>
+      <div class="end-sub">PONTUACAO FINAL</div>
       <div id="rank-badge-wrap"></div>
       <div class="result-grid">
         <div class="result-card"><div class="rv" id="r-correct">0</div><div class="rl">Acertos</div></div>
         <div class="result-card"><div class="rv" id="r-wrong">0</div><div class="rl">Erros</div></div>
-        <div class="result-card"><div class="rv" id="r-combo">×1</div><div class="rl">Combo Max</div></div>
+        <div class="result-card"><div class="rv" id="r-combo">x1</div><div class="rl">Combo Max</div></div>
       </div>
-      <button class="btn-neon" onclick="restartGame()">↺ &nbsp;JOGAR NOVAMENTE</button>
+      <button class="btn-neon" onclick="restartGame()">↺ JOGAR NOVAMENTE</button>
     </div>
     <div id="highscore-table">
-      <h3>// MELHORES PONTUAÇÕES //</h3>
+      <h3>// MELHORES PONTUACOES //</h3>
       <div id="hs-list"></div>
     </div>
   </div>
 </div>
-
-<!-- Feedback popup -->
 <div id="feedback-popup">
-  <div id="feedback-icon">✅</div>
+  <div id="feedback-icon">⭐</div>
   <div id="feedback-msg">CORRETO!</div>
   <div id="feedback-pts">+200 PTS</div>
 </div>
-
 <script>
-// ─── STARFIELD ────────────────────────────────────────────
 (function(){
-  const c=document.getElementById('stars'),ctx=c.getContext('2d');
+  var c=document.getElementById('stars'),ctx=c.getContext('2d');
   function resize(){c.width=innerWidth;c.height=innerHeight;}
-  resize(); window.addEventListener('resize',resize);
-  const stars=Array.from({length:200},()=>({x:Math.random()*innerWidth,y:Math.random()*innerHeight,r:Math.random()*1.5+.3,a:Math.random(),da:(Math.random()*.005+.001)*(Math.random()<.5?1:-1)}));
-  function draw(){
-    ctx.clearRect(0,0,c.width,c.height);
-    stars.forEach(s=>{s.a=Math.max(.1,Math.min(1,s.a+s.da));if(s.a>=1||s.a<=.1)s.da*=-1;ctx.beginPath();ctx.arc(s.x,s.y,s.r,0,Math.PI*2);ctx.fillStyle=`rgba(180,220,255,${s.a})`;ctx.fill();});
-    requestAnimationFrame(draw);
-  }
+  resize();window.addEventListener('resize',resize);
+  var stars=[];for(var i=0;i<250;i++)stars.push({x:Math.random()*innerWidth,y:Math.random()*innerHeight,r:Math.random()*1.8+.2,a:Math.random(),da:(Math.random()*.004+.001)*(Math.random()<.5?1:-1),h:Math.random()<.15?50:Math.random()<.3?280:220});
+  function draw(){ctx.clearRect(0,0,c.width,c.height);stars.forEach(function(s){s.a=Math.max(.1,Math.min(1,s.a+s.da));if(s.a>=1||s.a<=.1)s.da*=-1;ctx.beginPath();ctx.arc(s.x,s.y,s.r,0,Math.PI*2);ctx.fillStyle='hsla('+s.h+',80%,90%,'+s.a+')';ctx.fill();});requestAnimationFrame(draw);}
   draw();
 })();
 
-// ─── AUDIO ───────────────────────────────────────────────
-const AC = new (window.AudioContext || window.webkitAudioContext)();
-function playTone(freq,type,dur,vol=.25,delay=0){
-  const o=AC.createOscillator(),g=AC.createGain();
-  o.connect(g);g.connect(AC.destination);
-  o.type=type;o.frequency.setValueAtTime(freq,AC.currentTime+delay);
-  g.gain.setValueAtTime(vol,AC.currentTime+delay);
-  g.gain.exponentialRampToValueAtTime(.001,AC.currentTime+delay+dur);
-  o.start(AC.currentTime+delay);o.stop(AC.currentTime+delay+dur);
-}
+var AC=new(window.AudioContext||window.webkitAudioContext)();
+function playTone(f,t,d,v,delay){v=v||.25;delay=delay||0;var o=AC.createOscillator(),g=AC.createGain();o.connect(g);g.connect(AC.destination);o.type=t;o.frequency.setValueAtTime(f,AC.currentTime+delay);g.gain.setValueAtTime(v,AC.currentTime+delay);g.gain.exponentialRampToValueAtTime(.001,AC.currentTime+delay+d);o.start(AC.currentTime+delay);o.stop(AC.currentTime+delay+d);}
 function sfxCorrect(){playTone(523,'sine',.12,.2);playTone(659,'sine',.12,.2,.12);playTone(784,'sine',.2,.2,.23);}
 function sfxWrong(){playTone(220,'sawtooth',.08,.15);playTone(180,'sawtooth',.25,.15,.08);}
 function sfxTick(){playTone(880,'square',.04,.05);}
-function sfxGameOver(){[180,160,140].forEach((f,i)=>playTone(f,'sawtooth',.3,.15,i*.15));}
-function sfxWin(){[523,659,784,1047].forEach((f,i)=>playTone(f,'sine',.2,.2,i*.12));}
+function sfxGameOver(){[180,160,140].forEach(function(f,i){playTone(f,'sawtooth',.3,.15,i*.15);});}
+function sfxWin(){[523,659,784,1047].forEach(function(f,i){playTone(f,'sine',.2,.2,i*.12);});}
 function sfxCombo(){playTone(1046,'sine',.08,.15);playTone(1318,'sine',.15,.15,.09);}
-function unlockAudio(){AC.resume().catch(()=>{});}
+function unlockAudio(){AC.resume().catch(function(){});}
 document.addEventListener('touchstart',unlockAudio,{once:true,passive:true});
 document.addEventListener('click',unlockAudio,{once:true});
 
-// ─── DATA ─────────────────────────────────────────────────
-const QUESTIONS=[
-  {text:"A Guerra Fria foi um conflito que opôs as duas superpotências vencedoras da Segunda Guerra Mundial. Qual foi a principal característica que a diferenciou de outros conflitos?",opts:["Envolveu batalhas navais em todos os oceanos.","Foi um conflito direto e declarado entre EUA e URSS em território europeu.","Caracterizou-se pela disputa ideológica, tecnológica e geopolítica sem confronto militar direto entre as superpotências.","Limitou-se a disputas comerciais entre blocos econômicos.","Foi resolvido rapidamente por um tratado de paz em 1950."],ans:2,cat:"GUERRA FRIA"},
-  {text:"A Doutrina Truman, proclamada em 1947, estabelecia que os EUA deveriam:",opts:["Apoiar economicamente a reconstrução da Europa por meio do Plano Marshall exclusivamente.","Evitar qualquer intervenção nos assuntos políticos de outros países.","Conter o avanço do comunismo, prestando apoio a países ameaçados pela expansão soviética.","Criar uma aliança militar com a China para enfrentar a URSS.","Retirar suas tropas da Europa e concentrá-las na Ásia."],ans:2,cat:"DOUTRINA TRUMAN"},
-  {text:"O Plano Marshall (1948) foi uma iniciativa norte-americana voltada para:",opts:["Financiar a corrida armamentista dos países aliados da OTAN.","Reconstruir economicamente a Europa Ocidental após a Segunda Guerra Mundial, impedindo a expansão comunista.","Criar uma moeda única europeia para concorrer com o rublo soviético.","Financiar a independência das colônias africanas e asiáticas.","Estabelecer bases militares dos EUA em todo o continente europeu."],ans:1,cat:"PLANO MARSHALL"},
-  {text:"A chamada 'Corrida Espacial', travada durante a Guerra Fria, teve como marco inicial:",opts:["O envio do primeiro homem à Lua pelos EUA em 1969.","O lançamento do foguete V-2 pela Alemanha Nazista em 1944.","O lançamento do satélite soviético Sputnik em 1957, que gerou grande impacto no Ocidente.","A criação da NASA pelos EUA em 1945.","O primeiro voo espacial tripulado norte-americano com Alan Shepard."],ans:2,cat:"CORRIDA ESPACIAL"},
-  {text:"A Crise dos Mísseis de Cuba (1962) é considerada o momento de maior tensão da Guerra Fria porque:",opts:["Resultou em uma guerra convencional entre EUA e URSS no Caribe.","O mundo chegou muito próximo de um conflito nuclear, com mísseis soviéticos instalados a 90 milhas dos EUA.","Cuba declarou guerra formal aos Estados Unidos com apoio soviético.","Os EUA bombardearam bases militares soviéticas em Cuba.","A ONU interveio militarmente para impedir o conflito."],ans:1,cat:"CRISE DE CUBA"},
-  {text:"Sobre a OTAN e o Pacto de Varsóvia, é correto afirmar que:",opts:["Ambas as alianças foram criadas antes do término da Segunda Guerra Mundial.","A OTAN reunia países socialistas liderados pela URSS, enquanto o Pacto de Varsóvia era liderado pelos EUA.","A OTAN era uma aliança militar ocidental liderada pelos EUA, e o Pacto de Varsóvia era uma aliança militar dos países socialistas liderada pela URSS.","As duas organizações coexistiram pacificamente sem qualquer tensão.","O Brasil foi membro fundador da OTAN em 1949."],ans:2,cat:"OTAN & PACTO DE VARSÓVIA"},
-  {text:"A Política de Détente, implementada na década de 1970, representou:",opts:["A declaração formal do fim da Guerra Fria pelos líderes das superpotências.","Um período de relaxamento das tensões entre EUA e URSS, com acordos de limitação de armamentos como o SALT I.","Uma intensificação dos conflitos armados na América Latina e na Ásia.","A fusão das economias capitalista e socialista em um sistema único.","O início da corrida armamentista nuclear entre as superpotências."],ans:1,cat:"DÉTENTE"},
-  {text:"A queda do Muro de Berlim, em 1989, simbolizou:",opts:["A reunificação da Coreia do Norte e do Sul.","A vitória militar dos EUA sobre a URSS em território europeu.","O esgotamento do modelo soviético e o início do colapso do bloco socialista na Europa Oriental.","A criação da União Europeia como organismo supranacional.","A independência da Alemanha Oriental em relação à URSS."],ans:2,cat:"MURO DE BERLIM"},
-  {text:"A dissolução da URSS, ocorrida em dezembro de 1991, teve como consequência direta:",opts:["A criação de um único Estado europeu unificado sob liderança russa.","O surgimento de 15 repúblicas independentes e o fim da bipolaridade mundial.","A transferência imediata do arsenal nuclear soviético para os EUA.","A formação de um bloco militar liderado pela China como substituto do Pacto de Varsóvia.","A incorporação dos países socialistas ao bloco capitalista sem conflitos."],ans:1,cat:"FIM DA URSS"},
-  {text:"O conceito de 'Nova Ordem Mundial', consolidado após 1991, caracteriza-se principalmente por:",opts:["Uma ordem bipolar em que China e EUA dividem o poder mundial de forma equilibrada.","Um mundo multipolar em que a ONU possui poder absoluto sobre os Estados nacionais.","A hegemonia dos EUA como única superpotência, em um mundo unipolar marcado pela globalização.","O retorno ao modelo de equilíbrio de poder do século XIX, com impérios coloniais.","A substituição das nações-Estado por blocos regionais com exércitos próprios."],ans:2,cat:"NOVA ORDEM MUNDIAL"},
-  {text:"Os atentados de 11 de setembro de 2001 impactaram diretamente a Nova Ordem Mundial porque:",opts:["Levaram à criação da União Europeia como bloco de defesa coletiva.","Fizeram os EUA se retirarem definitivamente do Oriente Médio.","Redefiniram o conceito de segurança global, com os EUA declarando a 'Guerra ao Terror' e intervindo militarmente no Afeganistão e no Iraque.","Provocaram uma aliança militar permanente entre EUA, Rússia e China.","Resultaram na extinção da OTAN e na criação de uma força militar da ONU."],ans:2,cat:"11 DE SETEMBRO"},
-  {text:"A ascensão de potências emergentes como China, Índia, Brasil e Rússia no século XXI indica uma tendência de:",opts:["Retorno à Guerra Fria com novos atores no lugar de EUA e URSS.","Consolidação definitiva da hegemonia norte-americana sem contestações.","Transição para uma ordem mundial multipolar, com redistribuição do poder geopolítico e econômico global.","Extinção dos organismos internacionais como ONU e OMC.","Uniformização cultural e econômica de todas as nações sob um único modelo."],ans:2,cat:"MULTIPOLARIDADE"},
-  {text:"A Guerra da Coreia (1950–1953) é considerada um conflito típico da Guerra Fria porque:",opts:["Foi travada exclusivamente entre Coreia do Norte e Coreia do Sul sem qualquer intervenção externa.","Representou um confronto indireto entre EUA e URSS/China, com as superpotências apoiando lados opostos sem se enfrentarem diretamente.","Resultou na reunificação definitiva da Península Coreana sob governo democrático.","Foi o único conflito armado do período em que a ONU atuou como força de ocupação permanente.","Terminou com a vitória da Coreia do Norte e a retirada total das tropas norte-americanas da Ásia."],ans:1,cat:"GUERRA DA COREIA"},
-  {text:"A Revolução Cubana de 1959, liderada por Fidel Castro e Che Guevara, teve como consequência imediata:",opts:["A instauração de uma monarquia constitucional em Cuba com apoio dos EUA.","A integração de Cuba ao bloco capitalista liderado pelos Estados Unidos.","A derrubada da ditadura de Fulgêncio Batista e a implantação de um regime socialista a apenas 90 milhas dos EUA, gerando enorme tensão geopolítica.","A realização de eleições livres e democráticas que legitimaram o governo revolucionário internacionalmente.","A criação de uma república federativa com autonomia dos estados cubanos."],ans:2,cat:"REVOLUÇÃO CUBANA"},
-  {text:"A Revolução Chinesa de 1949, liderada por Mao Tsé-Tung, proclamou a República Popular da China após:",opts:["A derrota do Japão na Segunda Guerra Mundial e a rendição das forças imperiais ao Partido Comunista.","A vitória do Partido Comunista sobre as forças nacionalistas do Kuomintang de Chiang Kai-shek, que se refugiaram em Taiwan.","Um referendo popular realizado com supervisão da ONU que aprovou o modelo socialista.","A invasão soviética do território chinês e a imposição do regime comunista por Stálin.","A rendição voluntária do imperador chinês ao movimento comunista após negociações diplomáticas."],ans:1,cat:"REVOLUÇÃO CHINESA"},
-  {text:"A queda do Muro de Berlim, em 9 de novembro de 1989, foi consequência direta de:",opts:["Uma invasão militar da OTAN ao território da Alemanha Oriental.","Um acordo secreto entre Reagan e Gorbachev que determinou a demolição imediata do muro.","O acúmulo de pressões internas no bloco soviético, as reformas da Glasnost e Perestroika de Gorbachev e as manifestações populares que exigiram a abertura das fronteiras.","A vitória eleitoral de um partido pró-unificação nas eleições da Alemanha Oriental realizadas em 1988.","A intervenção direta da ONU que determinou o fim da divisão alemã como condição para novos acordos comerciais."],ans:2,cat:"MURO DE BERLIM"},
-  {text:"O neoliberalismo econômico, difundido globalmente a partir da década de 1980 pelos governos de Margaret Thatcher (Reino Unido) e Ronald Reagan (EUA), defendia:",opts:["A ampliação do Estado de Bem-Estar Social com maior investimento público em saúde, educação e previdência.","A nacionalização das grandes empresas estratégicas para garantir soberania econômica nacional.","A redução do papel do Estado na economia, com privatizações, desregulamentação dos mercados, abertura comercial e corte de gastos públicos.","A criação de blocos econômicos fechados para proteger as economias nacionais da concorrência externa.","O fortalecimento de sindicatos e movimentos trabalhistas como motor do desenvolvimento econômico."],ans:2,cat:"NEOLIBERALISMO"},
-  {text:"O desmembramento da URSS, concluído em dezembro de 1991, foi acelerado principalmente por:",opts:["Uma guerra civil generalizada entre as 15 repúblicas soviéticas que tornou inviável a manutenção da união.","Uma invasão militar coordenada pela OTAN que obrigou Gorbachev a dissolver o Estado soviético.","A combinação entre a crise econômica soviética, os movimentos nacionalistas nas repúblicas, o fracasso das reformas de Gorbachev e a perda de legitimidade do Partido Comunista após o golpe frustrado de agosto de 1991.","A decisão unilateral do Parlamento Russo, liderado por Boris Iéltsin, de expulsar as demais repúblicas da federação.","Um referendo pan-soviético no qual a maioria da população votou pelo fim da URSS e pela independência das repúblicas."],ans:2,cat:"FIM DA URSS"},
-  {text:"A Nova Ordem Mundial pós-Guerra Fria foi marcada pelo surgimento de novos conflitos regionais. Qual fenômeno melhor explica esse aumento de instabilidade?",opts:["A corrida armamentista nuclear entre EUA e Rússia intensificou conflitos por procuração em todo o mundo.","Com o fim da bipolaridade, emergiram conflitos étnicos, religiosos e nacionalistas antes contidos pela lógica da Guerra Fria, como nas guerras da Iugoslávia e nos genocídios africanos.","A ONU tornou-se mais poderosa e passou a intervir militarmente em todos os conflitos regionais sem autorização dos países envolvidos.","Os EUA e a Rússia dividiram o mundo em zonas de influência exclusiva, gerando disputas territoriais sistemáticas.","A globalização econômica eliminou as fronteiras nacionais, criando disputas por recursos naturais entre blocos regionais."],ans:1,cat:"NOVA ORDEM MUNDIAL"},
-  {text:"A aceleração da globalização a partir dos anos 1990 foi impulsionada por um conjunto de fatores. Qual alternativa os sintetiza corretamente?",opts:["O fortalecimento de barreiras alfandegárias e a criação de blocos econômicos fechados que estimularam o comércio intrarregional.","A revolução tecnológica da internet, a liberalização do comércio internacional com acordos como o GATT/OMC, a desregulamentação financeira e a queda do bloco socialista, que integraram mercados, culturas e fluxos de capital em escala planetária.","A hegemonia cultural dos países emergentes, que exportaram seus modelos de consumo para as nações desenvolvidas.","A criação de uma moeda global única que eliminou as barreiras cambiais e unificou os sistemas financeiros nacionais.","A migração em massa de trabalhadores entre os países desenvolvidos e em desenvolvimento como principal motor da integração econômica global."],ans:1,cat:"GLOBALIZAÇÃO"}
+var QUESTIONS=[
+  {text:"A Terra nao e uma esfera perfeita. Qual e o termo cientifico correto para descrever a forma real do nosso planeta?",opts:["Esfera perfeita, pois as diferencas entre polo e equador sao irrelevantes para qualquer calculo geografico preciso.","Cuboide achatado, com faces planas nas regioes polares e levemente curvas nas faixas equatoriais tropicais do planeta.","Geoide ou elipsoide de revolucao: levemente achatada nos polos e com diametro equatorial maior, devido a forca centrifuga da rotacao.","Toroide irregular, com depressao central detectavel apenas por gravimetros de altissima precisao em pesquisas geofisicas.","Piramide de base circular, conforme indicado por medicoes combinadas de satelites GPS e sonares oceanicos modernos."],ans:2,cat:"FORMA DA TERRA"},
+  {text:"O movimento de rotacao da Terra e responsavel por varios fenomenos. Qual alternativa apresenta CORRETAMENTE uma consequencia direta desse movimento?",opts:["A alternancia entre dia e noite, pois a Terra gira em torno do proprio eixo completando um ciclo em aproximadamente 24 horas.","A sucessao das quatro estacoes do ano, pois a Terra gira em torno do Sol alterando sua posicao ao longo dos meses do ano.","A ocorrencia das mares oceanicas, provocadas exclusivamente pelo giro da Terra em torno do seu eixo polar inclinado.","A variacao climatica entre tropicos e polos, causada pela diferente velocidade de rotacao nas diversas latitudes terrestres.","A formacao de correntes oceanicas quentes e frias que circulam em padroes regulares ao redor de todo o globo terrestre."],ans:0,cat:"ROTACAO"},
+  {text:"A velocidade de rotacao da Terra varia conforme a regiao. Em qual ponto do planeta a velocidade linear de rotacao e maior e por que?",opts:["Nas regioes polares, pois estao mais proximas do eixo de rotacao e recebem maior forca gravitacional solar diretamente.","Nas zonas temperadas do hemisferio norte, pois possuem maior massa continental que acelera o giro terrestre continuamente.","Em altitudes elevadas como picos montanhosos, onde a menor resistencia do ar aumenta significativamente a velocidade angular.","Na regiao equatorial, onde a circunferencia percorrida em 24 horas e muito maior do que nos demais paralelos terrestres.","A velocidade e identica em todos os pontos, pois a Terra e um corpo rigido que gira uniformemente em todas as regioes."],ans:3,cat:"ROTACAO"},
+  {text:"O movimento de translacao da Terra dura cerca de 365 dias e 6 horas. Que mecanismo foi criado para compensar essas 6 horas extras acumuladas a cada ano?",opts:["O horario de verao, adotado por paises do hemisferio norte para compensar as fracoes de hora acumuladas ao longo de decadas.","O ano bissexto, que adiciona um dia extra em fevereiro a cada 4 anos para ajustar o calendario a orbita real da Terra.","O fuso horario universal UTC, que redistribui as horas excedentes uniformemente entre todos os paises do globo terrestre.","O segundo intercalar, inserido anualmente ao calendario por determinacao da Uniao Astronomica Internacional mundial.","O calendario juliano, que corrige automaticamente as fracoes usando o solsticio de dezembro como marco de referencia anual."],ans:1,cat:"TRANSLACAO"},
+  {text:"O eixo de rotacao da Terra e inclinado aproximadamente 23,5 graus em relacao a perpendicular do plano orbital. O que essa inclinacao explica diretamente?",opts:["A diferenca de temperatura entre equador e polos, causada pela curvatura da superficie terrestre e pela distancia relativa ao Sol.","A existencia dos fusos horarios, que compensam a inclinacao do eixo em diferentes longitudes ao redor do globo terrestre.","A formacao das correntes de jato na atmosfera superior, responsaveis pela redistribuicao do calor entre os continentes.","A precessao dos equinocios, fenomeno causado exclusivamente pela atracao gravitacional da Lua sobre o eixo terrestre inclinado.","A ocorrencia das quatro estacoes do ano, pois hemisferios norte e sul recebem mais ou menos radiacao solar em epocas distintas."],ans:4,cat:"ESTACOES DO ANO"},
+  {text:"A precessao dos equinocios e um lento bambolear do eixo terrestre parecido com um piao. Qual e o periodo completo desse ciclo e sua principal consequencia astronomica?",opts:["Ocorre a cada 365 dias e e responsavel pela mudanca das estacoes do ano no calendario gregoriano moderno utilizado mundialmente.","Completa um ciclo a cada 26.000 anos: daqui a cerca de 12.000 anos Vega substituira Polaris como estrela polar do hemisferio norte.","Dura exatamente 100 anos e provoca o lento deslocamento dos continentes, conforme previsto pela teoria da tectonica de placas.","Ocorre a cada 400 anos e e responsavel pela variacao periodica na intensidade das mares ao longo das costas oceanicas mundiais.","Tem duracao de 11 anos e coincide com os ciclos das manchas solares, intensificando as auroras boreais nas regioes polares."],ans:1,cat:"PRECESSAO DOS EQUINOCIOS"},
+  {text:"Os solsticios e equinocios marcam pontos especificos da translacao terrestre. Qual afirmativa esta CORRETA sobre esses fenomenos anuais?",opts:["Nos equinocios, o Sol atinge o ponto mais alto do ceu e o dia e mais longo do que a noite nos dois hemisferios simultaneamente.","Nos solsticios de dezembro, o hemisferio norte vive seu dia mais longo e o hemisferio sul experimenta sua noite mais longa do ano.","Os solsticios ocorrem quando a Terra esta no perielio (ponto mais proximo) ou no afelio (mais afastado) em relacao ao Sol.","Nos equinocios de marco e setembro, a duracao do dia e da noite e aproximadamente igual em todo o planeta, pois o Sol esta sobre o equador.","Os equinocios marcam simultaneamente o inicio do inverno e do verao nos dois hemisferios em datas fixas e imutaveis do ano."],ans:3,cat:"SOLSTICIOS E EQUINOCIOS"},
+  {text:"No hemisferio sul as estacoes do ano sao invertidas em relacao ao hemisferio norte. Qual alternativa descreve CORRETAMENTE as estacoes no Brasil?",opts:["O verao brasileiro ocorre entre dezembro e marco, quando o hemisferio sul esta mais inclinado em direcao ao Sol, recebendo maior radiacao.","O inverno no Brasil coincide com o do hemisferio norte, pois ambos compartilham os mesmos meses frios de dezembro e janeiro.","O Brasil nao possui estacoes definidas porque esta localizado inteiramente na zona equatorial do planeta entre os dois tropicos.","O verao brasileiro ocorre em junho, julho e agosto, quando o hemisferio sul se inclina maximamente em direcao ao Sol anualmente.","As estacoes no Brasil sao iguais as do hemisferio norte porque a proximidade com o Atlantico equilibra as temperaturas sazonais."],ans:0,cat:"ESTACOES DO ANO"},
+  {text:"Os fusos horarios organizam o tempo no globo. Como e definida a base do sistema e quantos fusos horarios existem ao todo?",opts:["A base e o Tropico de Cancer, dividindo o planeta em 12 fusos de 30 graus de latitude, com 2 horas de diferenca entre cada fuso.","Os fusos foram criados pelo Tratado de Versalhes usando Paris como referencia, com 18 fusos de 20 graus de longitude cada um.","Existem 12 fusos ao todo, representando 2 horas de diferenca cada, baseados nos paralelos em vez dos meridianos terrestres.","O sistema baseia-se no meridiano de Greenwich (0 grau): 24 fusos de 15 graus de longitude, avancando 1 hora para leste e recuando 1 para oeste.","Os fusos baseiam-se nos polos magneticos da Terra, com 36 zonas de 10 graus cada, atualizados periodicamente por decisao da ONU."],ans:3,cat:"FUSOS HORARIOS"},
+  {text:"Se sao 12h em Brasilia (UTC-3), que horas sao em Fernando de Noronha (UTC-2), no Amazonas (UTC-4) e no Acre (UTC-5)?",opts:["11h em Fernando de Noronha, 13h no Amazonas e 14h no Acre, seguindo a inversao de fusos do hemisferio sul brasileiro.","12h em todos os estados, pois o Brasil adota horario unificado para facilitar a administracao publica e empresarial nacional.","14h em Fernando de Noronha, 10h no Amazonas e 8h no Acre, aplicando a diferenca de dois fusos entre cada estado listado.","13h em Fernando de Noronha, 11h no Amazonas e 10h no Acre, aplicando corretamente as diferencas de fuso de cada regiao.","13h em Fernando de Noronha, 12h no Amazonas e 11h no Acre, avancando uma hora a cada estado brasileiro para o leste."],ans:3,cat:"FUSOS HORARIOS"},
+  {text:"Latitude e longitude sao coordenadas geograficas fundamentais. Qual e a diferenca CORRETA entre os dois sistemas de medicao?",opts:["Latitude mede a posicao norte-sul em relacao ao equador (0 a 90 graus) e longitude mede a posicao leste-oeste a partir do meridiano de Greenwich (0 a 180 graus).","Latitude mede a distancia leste-oeste a partir de Greenwich e longitude mede a distancia norte-sul a partir do equador terrestre.","Latitude e longitude sao equivalentes e medem a mesma distancia angular em direcoes opostas a partir dos polos magneticos.","Latitude e expressa em metros e longitude em graus, ambas calculadas a partir do polo norte como ponto de referencia universal.","Latitude mede a altitude acima do nivel do mar e longitude mede a distancia horizontal em relacao a linha do equador terrestre."],ans:0,cat:"LATITUDE E LONGITUDE"},
+  {text:"Qual afirmacao descreve CORRETAMENTE as caracteristicas geometricas dos paralelos (latitude) e meridianos (longitude)?",opts:["Os paralelos convergem em direcao aos polos e possuem comprimentos iguais entre si, enquanto os meridianos sao paralelos no globo.","Existem exatamente 180 paralelos e 360 meridianos, todos com o mesmo comprimento e separados por exatamente um grau entre si.","Os meridianos sao semicirculos que convergem nos polos com o mesmo comprimento, enquanto os paralelos diminuem do equador aos polos.","Os paralelos tem todos o mesmo comprimento do equador aos polos, e os meridianos crescem progressivamente em direcao as regioes polares.","O equador e o principal meridiano do sistema, dividindo o planeta em hemisferios leste e oeste com o mesmo numero de fusos."],ans:2,cat:"LATITUDE E LONGITUDE"},
+  {text:"A Lua e o unico satelite natural da Terra. Qual e o periodo de revolucao lunar e como ele se relaciona com sua propria rotacao?",opts:["A Lua leva 30 dias para orbitar a Terra e 27 dias para girar em seu eixo, por isso vemos faces lunares diferentes a cada semana.","A Lua orbita a Terra em 24 horas, sincronizada com a rotacao terrestre, mantendo sempre o mesmo ponto voltado para o ceu.","O periodo de revolucao lunar e de 365 dias, coincidindo com a translacao da Terra e fazendo as fases se repetirem anualmente.","A Lua leva 27,3 dias para orbitar a Terra e o mesmo tempo para girar em torno de si - rotacao sincrona - por isso sempre vemos a mesma face.","A Lua nao possui rotacao propria e permanece estatica enquanto a Terra se move em torno dela durante sua orbita anual."],ans:3,cat:"A LUA"},
+  {text:"O que sao as mares de sizigia e as mares de quadratura e quais as diferencas em amplitude entre elas?",opts:["Mares de sizigia ocorrem somente no hemisferio norte e as de quadratura afetam exclusivamente os oceanos do hemisferio sul.","Ambos os tipos tem a mesma amplitude e diferem apenas pelo horario: sizigia ocorre de manha e quadratura ocorre durante a noite.","Mares de sizigia sao causadas exclusivamente pela gravidade solar, sem influencia da Lua, ocorrendo nos equinocios de marco e setembro.","Mares de sizigia sao as menores, ocorrendo quando a Lua esta a 90 graus da Terra. As de quadratura sao as maiores, na Lua nova e cheia.","Mares de sizigia sao as maiores mares (Lua nova e cheia, alinhamento Sol-Terra-Lua). Mares de quadratura sao as menores, quando Lua e Sol formam 90 graus com a Terra."],ans:4,cat:"MARES"},
+  {text:"Alem das mares oceanicas, a forca gravitacional da Lua provoca outros efeitos sobre a Terra. Qual afirmacao esta CORRETA?",opts:["A gravidade lunar provoca tambem mares terrestres: deformacoes milimetricas na crosta solida e influencia ciclos reprodutivos de organismos marinhos.","A Lua influencia apenas os oceanos, nao exercendo nenhuma acao sobre a crosta terrestre solida, a atmosfera ou os seres vivos.","A influencia lunar nas mares diminuiu muito nos ultimos seculos porque a Lua esta se afastando progressivamente da orbita terrestre.","A forca gravitacional da Lua e tao reduzida que seu efeito nas mares e inferior ao provocado pelos ventos e correntes oceanicas.","A Lua afeta apenas as mares do hemisferio sul enquanto o Sol controla exclusivamente as mares do hemisferio norte do planeta."],ans:0,cat:"MARES"},
+  {text:"As fases da Lua resultam da posicao relativa entre Terra, Lua e Sol. Qual descricao esta CORRETA sobre a Lua nova e a Lua cheia?",opts:["Na Lua nova, a Lua esta oposta ao Sol, totalmente iluminada e visivel durante toda a noite nos dois hemisferios terrestres.","Na Lua nova, a Lua esta entre Terra e Sol: sua face voltada para nos nao recebe luz direta, ficando invisivel. Na Lua cheia, a Terra esta entre Lua e Sol e a face lunar fica totalmente iluminada.","Lua nova e Lua cheia ocorrem no mesmo dia do mes, apenas em horarios diferentes: uma ao amanhecer e a outra ao por do sol.","As fases sao causadas pelas sombras que a Terra projeta sobre a superficie lunar ao girar em torno do proprio eixo diariamente.","Na Lua nova apenas o hemisferio norte ve a Lua iluminada, enquanto na Lua cheia a visibilidade e exclusiva do hemisferio sul."],ans:1,cat:"FASES DA LUA"},
+  {text:"Como ocorrem o eclipse lunar e o eclipse solar? Qual alternativa descreve CORRETAMENTE cada tipo de eclipse?",opts:["Eclipse solar e lunar ocorrem no mesmo dia, pois dependem do mesmo alinhamento simultaneo dos tres astros do sistema solar.","Eclipse lunar ocorre na Lua nova, quando ela passa na frente do Sol, bloqueando a luz solar para parte da superficie terrestre.","Eclipse solar ocorre quando a Lua se interpos entre Terra e Sol (Lua nova), bloqueando a luz. Eclipse lunar ocorre quando a Terra projeta sombra sobre a Lua (Lua cheia).","Eclipse lunar ocorre quando a Lua passa diretamente pela sombra do Sol, sem intermediacao da Terra, fenomeno chamado transito lunar.","Os eclipses ocorrem a cada 6 meses, sempre coincidindo exatamente com os solsticios de junho e dezembro no calendario astronomico."],ans:2,cat:"ECLIPSES"},
+  {text:"Por que os eclipses nao ocorrem todo mes, apesar das fases de Lua nova e cheia serem eventos mensais regulares?",opts:["Porque a Lua fica distante demais da Terra em certos meses, tornando seu tamanho angular pequeno demais para produzir eclipse.","Porque a orbita da Lua e inclinada cerca de 5 graus em relacao ao plano orbital da Terra, e eclipses so ocorrem quando a Lua cruza os nodos lunares.","Porque a rotacao terrestre impede que a sombra lunar cubra sempre a mesma regiao, espalhando os eventos ao longo de varios meses.","Porque o Sol muda de posicao em relacao a Terra mensalmente, tornando o alinhamento perfeito entre os tres astros muito mais raro.","Porque eclipses sao causados por asteroides entre a Terra e o Sol, fenomeno que ocorre poucas vezes a cada seculo astronomico."],ans:1,cat:"ECLIPSES"},
+  {text:"O que torna possivel que a Lua, muito menor que o Sol, consiga bloquea-lo completamente durante um eclipse solar total?",opts:["A Lua aumenta temporariamente de tamanho durante o eclipse por causa do aquecimento extremo causado pela proximidade com o Sol.","O Sol possui manchas solares escuras que permitem a Lua cobri-lo mesmo sendo muito menor em diametro e volume absolutos.","A atmosfera terrestre refrata a luz solar durante o eclipse, distorcendo a aparencia do Sol e fazendo-o parecer menor do que e.","O nucleo denso de ferro da Lua a faz parecer menor do que realmente e, ocultando o verdadeiro tamanho de sua superficie.","O Sol e 400 vezes maior que a Lua, mas esta 400 vezes mais distante, fazendo ambos terem o mesmo tamanho angular aparente no ceu."],ans:4,cat:"ECLIPSES"},
+  {text:"Qual e a funcao especifica da Linha Internacional de Data, localizada aproximadamente ao longo do meridiano de 180 graus?",opts:["Marca o ponto exato onde o Sol esta sempre no zenite ao meio-dia, servindo como referencia para o calculo de todos os fusos.","E a fronteira onde, ao cruza-la de oeste para leste, o viajante recua um dia no calendario, e de leste para oeste, avanca um dia.","Divide o planeta em dois hemisferios de temperatura, com o lado oeste permanentemente mais quente do que o lado leste do globo.","E o meridiano a partir do qual todos os paises calculam o fuso horario somando ou subtraindo horas do horario oficial de Fiji.","Marca o ponto onde dia e noite se encontram permanentemente, mantendo um lado sempre iluminado e o outro sempre escuro."],ans:1,cat:"FUSOS HORARIOS"},
+  {text:"O que sao perielio e afelio e como se relacionam com as estacoes do ano no hemisferio sul brasileiro?",opts:["Perielio e a maior distancia da Terra ao Sol (em julho) e afelio e a menor distancia (em janeiro), sendo a causa principal das estacoes.","Perielio e afelio descrevem a variacao da velocidade de rotacao da Terra ao longo do ano, sem relacao direta com a distancia ao Sol.","Perielio e afelio ocorrem nos equinocios e sao responsaveis diretos pelos dias de igual duracao em marco e setembro de cada ano.","Perielio e o nome do solsticio de dezembro no hemisferio sul e afelio denomina o solsticio de junho no hemisferio norte da Terra.","Perielio e o ponto de menor distancia ao Sol (janeiro, verao no Brasil); afelio e o mais afastado (julho). A inclinacao do eixo domina as estacoes."],ans:4,cat:"TRANSLACAO"},
+  {text:"Quais limites de latitude definem as zonas Tropical, Temperada e Polar e quais linhas imaginarias as demarcam?",opts:["Zona Tropical entre 0 e 23,5 graus; Zona Temperada entre 23,5 e 66,5 graus; Zona Polar acima de 66,5 graus - delimitadas pelos Tropicos e Circulos Polares.","Zona Tropical entre 0 e 45 graus; Zona Temperada entre 45 e 75 graus; Zona Polar acima de 75 graus - limites baseados na temperatura media anual.","Zona Tropical abrange todo o planeta entre equador e polos; as demais zonas sao subdivisoes sem relacao com a translacao terrestre.","Zonas climaticas determinadas exclusivamente pela distancia ao oceano e altitude, sem relacao nenhuma com a latitude geografica.","Zona Tropical entre meridianos 0 e 90 graus; Zona Temperada entre 90 e 150 graus; Zona Polar entre 150 e 180 graus de longitude."],ans:0,cat:"LATITUDE E LONGITUDE"},
+  {text:"Qual e o principal objetivo do Projeto Artemis da NASA e como ele se diferencia das historicas missoes Apollo do seculo XX?",opts:["O Artemis visa apenas enviar sondas roboticas para mapear o polo sul lunar, sem previsao de missoes tripuladas antes de 2060.","O Artemis e programa exclusivamente europeu liderado pela ESA, com a NASA participando somente no fornecimento de foguetes.","O Artemis e continuacao direta das missoes Apollo, reutilizando os mesmos modulos e tecnologias dos anos 1960, apenas digitalizados.","O Artemis tem como meta levar humanos de volta a Lua - incluindo a primeira mulher - com foco no polo sul e preparacao para missoes a Marte.","O objetivo central e extrair helio-3 do regolito lunar para abastecer reatores de fusao nuclear, sem base permanente prevista."],ans:3,cat:"PROJETO ARTEMIS"},
+  {text:"O Projeto Artemis usa tecnologias avancadas que nao existiam nas missoes Apollo. Qual alternativa descreve CORRETAMENTE seus componentes principais?",opts:["O programa usa exclusivamente foguetes reutilizaveis da SpaceX, sem participacao de outras agencias espaciais ou paises no projeto.","O Artemis utiliza o foguete SLS, a capsula Orion, o Gateway (estacao orbital lunar) e conta com parceiros como ESA, JAXA e CSA.","O Artemis usa o modulo de pouso LEM das missoes Apollo, atualizado com novos sistemas de navegacao digital e propulsao eletrica.","O programa preve teletransporte quantico para suprimentos a Lua, eliminando a necessidade de voos de carga frequentes e caros.","O Artemis e financiado exclusivamente por empresas privadas como SpaceX e Blue Origin, sem verba publica direta da NASA americana."],ans:1,cat:"PROJETO ARTEMIS"},
+  {text:"Qual e a importancia cientifica dos eclipses solares totais alem do espetaculo visual que proporcionam aos observadores na Terra?",opts:["Os eclipses sao eventos apenas espetaculares, sem relevancia cientifica, pois satelites observam o Sol continuamente a qualquer momento.","Eclipses lunares sao mais importantes que os solares, pois permitem medir com exatidao o diametro exato da sombra terrestre.","A importancia limita-se a previsao de terremotos e erupcoes, pois a ausencia de luz altera as correntes atmosfericas locais.","Eclipses solares totais permitem estudar a coroa solar, testar teorias fisicas como a deflexao gravitacional da luz confirmada em 1919 e observar fenomenos unicos.","Eclipses sao usados apenas para calibrar relogios atomicos, sendo essa sua unica e exclusiva aplicacao cientifica nos dias atuais."],ans:3,cat:"ECLIPSES"},
+  {text:"Considerando os movimentos interligados de Terra e Lua, qual afirmacao resume CORRETAMENTE a dinamica desse sistema ao longo do tempo geologico?",opts:["Os movimentos de Terra e Lua sao completamente independentes e nao exercem nenhuma influencia mutua alem das mares oceanicas.","A Lua esta se aproximando gradualmente da Terra por causa da gravidade e colidira com nosso planeta em cerca de um bilhao de anos.","A rotacao da Terra e perfeitamente constante e nao sofre nenhuma influencia dos movimentos lunares, solares ou de qualquer astro.","A precessao dos equinocios e causada somente pela Lua e cessara completamente quando ela parar de se afastar da Terra progressivamente.","O atrito das mares lunares freia lentamente a rotacao da Terra (dia aumenta 1,4ms por seculo) enquanto a Lua se afasta cerca de 3,8cm por ano."],ans:4,cat:"SISTEMA TERRA-LUA"}
 ];
 
-// ─── STATE ────────────────────────────────────────────────
-let score=0,lives=3,combo=1,maxCombo=1,qi=0,timer=120,timerInterval=null,answered=false,correct=0,wrong=0;
-const TIMER_MAX=120, BASE_PTS=100, CIRC=138;
+var TOTAL=QUESTIONS.length;
+var score=0,lives=3,combo=1,maxCombo=1,qi=0,timer=120,timerInterval=null,answered=false,correct=0,wrong=0;
+var TIMER_MAX=120,BASE_PTS=100,CIRC=138;
 
-// ─── SCREENS ─────────────────────────────────────────────
-function showScreen(id){
-  document.querySelectorAll('.screen').forEach(s=>{s.classList.remove('active');});
-  document.getElementById(id).classList.add('active');
-}
+function showScreen(id){document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active');});document.getElementById(id).classList.add('active');}
 
-// ─── START ───────────────────────────────────────────────
-function startGame(){
-  score=0;lives=3;combo=1;maxCombo=1;qi=0;correct=0;wrong=0;
-  document.getElementById('hud').style.display='flex';
-  document.getElementById('progress-wrap').style.display='block';
-  updateHUD();
-  showScreen('question-screen');
-  loadQuestion();
-}
+function startGame(){score=0;lives=3;combo=1;maxCombo=1;qi=0;correct=0;wrong=0;document.getElementById('hud').style.display='flex';document.getElementById('progress-wrap').style.display='block';updateHUD();showScreen('question-screen');loadQuestion();}
 
-// ─── HUD ─────────────────────────────────────────────────
 function updateHUD(){
   document.getElementById('score-display').textContent=score.toLocaleString();
-  document.getElementById('combo-display').textContent='×'+combo;
-  document.getElementById('level-display').textContent=(qi+1)+'/20';
-  // lives
-  const lr=document.getElementById('lives-row');
-  lr.innerHTML='';
-  for(let i=0;i<3;i++){const h=document.createElement('span');h.className='heart'+(i>=lives?' dead':'');h.textContent='❤️';lr.appendChild(h);}
-  // progress
-  const pct=Math.round((qi/20)*100);
+  document.getElementById('combo-display').textContent='x'+combo;
+  document.getElementById('level-display').textContent=(qi+1)+'/'+TOTAL;
+  var lr=document.getElementById('lives-row');lr.innerHTML='';
+  for(var i=0;i<3;i++){var h=document.createElement('span');h.className='heart'+(i>=lives?' dead':'');h.textContent='🌙';lr.appendChild(h);}
+  var pct=Math.round((qi/TOTAL)*100);
   document.getElementById('prog-fill').style.width=pct+'%';
   document.getElementById('prog-pct').textContent=pct+'%';
 }
 
-// ─── LOAD QUESTION ───────────────────────────────────────
 function loadQuestion(){
-  if(qi>=QUESTIONS.length){endGame(true);return;}
+  if(qi>=TOTAL){endGame(true);return;}
   answered=false;
-  const q=QUESTIONS[qi];
-  document.getElementById('q-level-label').textContent=`NÍVEL ${String(qi+1).padStart(2,'0')} — ${q.cat}`;
+  var q=QUESTIONS[qi];
+  document.getElementById('q-level-label').textContent='NIVEL '+String(qi+1).padStart(2,'0')+' - '+q.cat;
   document.getElementById('q-text').textContent=q.text;
-  const grid=document.getElementById('options-grid');
-  grid.innerHTML='';
-  q.opts.forEach((opt,i)=>{
-    const btn=document.createElement('button');
-    btn.className='opt-btn';
-    btn.innerHTML=`<span class="opt-letter">${'ABCDE'[i]}</span><span>${opt}</span>`;
-    btn.onclick=()=>pick(i,btn);
+  var grid=document.getElementById('options-grid');grid.innerHTML='';
+  q.opts.forEach(function(opt,i){
+    var btn=document.createElement('button');btn.className='opt-btn';
+    var letter=document.createElement('span');letter.className='opt-letter';letter.textContent='ABCDE'[i];
+    var txt=document.createElement('span');txt.textContent=opt;
+    btn.appendChild(letter);btn.appendChild(txt);
+    btn.addEventListener('click',function(){pick(i,btn);});
     grid.appendChild(btn);
   });
-  updateHUD();
-  startTimer();
-  // entrance animation
-  const qs=document.getElementById('question-screen');
-  qs.style.animation='none';requestAnimationFrame(()=>{qs.style.animation='fadeUp .4s ease';});
+  updateHUD();startTimer();
 }
 
-// ─── TIMER ───────────────────────────────────────────────
 function startTimer(){
-  clearInterval(timerInterval);
-  timer=TIMER_MAX;
-  updateTimerUI();
-  timerInterval=setInterval(()=>{
+  clearInterval(timerInterval);timer=TIMER_MAX;updateTimerUI();
+  timerInterval=setInterval(function(){
     timer--;
     if(timer<=15&&timer>0)sfxTick();
     updateTimerUI();
     if(timer<=0){clearInterval(timerInterval);timeOut();}
   },1000);
 }
+
 function updateTimerUI(){
-  const pct=timer/TIMER_MAX;
-  const offset=CIRC*(1-pct);
-  const arc=document.getElementById('timer-arc');
-  arc.style.strokeDashoffset=offset;
-  arc.style.stroke=timer>40?'var(--neon)':timer>20?'var(--gold)':'var(--red)';
+  var pct=timer/TIMER_MAX;
+  document.getElementById('timer-arc').style.strokeDashoffset=CIRC*(1-pct);
+  document.getElementById('timer-arc').style.stroke=timer>40?'var(--neon)':timer>20?'var(--neon2)':'var(--red)';
   document.getElementById('timer-num').textContent=timer;
 }
-function timeOut(){
-  if(answered)return;
-  answered=true;
-  loseLife();
-  showFeedback(false,'TEMPO ESGOTADO!',0);
-  highlightCorrect();
-  disableOptions();
-  setTimeout(nextQuestion,1800);
-}
 
-// ─── PICK ANSWER ─────────────────────────────────────────
+function timeOut(){if(answered)return;answered=true;loseLife();showFeedback(false,'TEMPO ESGOTADO!',0);highlightCorrect();disableOptions();setTimeout(nextQuestion,1800);}
+
 function pick(idx,btn){
-  if(answered)return;
-  AC.resume();
-  answered=true;
-  clearInterval(timerInterval);
-  const q=QUESTIONS[qi];
-  disableOptions();
+  if(answered)return;AC.resume();
+  answered=true;clearInterval(timerInterval);
+  var q=QUESTIONS[qi];disableOptions();
   if(idx===q.ans){
-    const timePts=Math.round((timer/TIMER_MAX)*50);
-    const pts=(BASE_PTS+timePts)*combo;
-    score+=pts;
-    correct++;
+    var timePts=Math.round((timer/TIMER_MAX)*50);
+    var pts=(BASE_PTS+timePts)*combo;
+    score+=pts;correct++;
     btn.classList.add('correct');
-    combo=Math.min(5,combo+1);
-    maxCombo=Math.max(maxCombo,combo);
-    sfxCorrect();
-    if(combo>=3)sfxCombo();
-    spawnParticles(btn);
-    showFloatScore('+'+pts,btn,'var(--gold)');
+    combo=Math.min(5,combo+1);maxCombo=Math.max(maxCombo,combo);
+    sfxCorrect();if(combo>=3)sfxCombo();
+    spawnParticles(btn);showFloatScore('+'+pts,btn,'var(--gold)');
     showFeedback(true,'CORRETO!',pts);
     document.getElementById('question-screen').classList.add('flash-correct');
-    setTimeout(()=>document.getElementById('question-screen').classList.remove('flash-correct'),600);
-  } else {
-    btn.classList.add('wrong');
-    highlightCorrect();
-    combo=1;
-    wrong++;
-    loseLife();
-    sfxWrong();
-    showFeedback(false,'INCORRETO!',0);
+    setTimeout(function(){document.getElementById('question-screen').classList.remove('flash-correct');},600);
+  }else{
+    btn.classList.add('wrong');highlightCorrect();
+    combo=1;wrong++;loseLife();sfxWrong();showFeedback(false,'INCORRETO!',0);
     document.getElementById('question-screen').classList.add('flash-wrong');
-    setTimeout(()=>document.getElementById('question-screen').classList.remove('flash-wrong'),400);
+    setTimeout(function(){document.getElementById('question-screen').classList.remove('flash-wrong');},400);
   }
-  updateHUD();
-  popCombo();
-  setTimeout(()=>{hideFeedback();nextQuestion();},1600);
+  updateHUD();popCombo();
+  setTimeout(function(){hideFeedback();nextQuestion();},1600);
 }
 
-function highlightCorrect(){
-  const btns=document.querySelectorAll('.opt-btn');
-  btns[QUESTIONS[qi].ans].classList.add('correct');
-}
-function disableOptions(){document.querySelectorAll('.opt-btn').forEach(b=>b.disabled=true);}
+function highlightCorrect(){document.querySelectorAll('.opt-btn')[QUESTIONS[qi].ans].classList.add('correct');}
+function disableOptions(){document.querySelectorAll('.opt-btn').forEach(function(b){b.disabled=true;});}
+function loseLife(){lives--;if(lives<=0)setTimeout(function(){endGame(false);},1800);}
+function nextQuestion(){qi++;if(lives<=0){endGame(false);return;}loadQuestion();}
 
-function loseLife(){
-  lives--;
-  if(lives<=0){setTimeout(()=>endGame(false),1800);}
-}
-
-// ─── NEXT ────────────────────────────────────────────────
-function nextQuestion(){
-  qi++;
-  if(lives<=0){endGame(false);return;}
-  loadQuestion();
-}
-
-// ─── FEEDBACK POPUP ──────────────────────────────────────
 function showFeedback(ok,msg,pts){
-  const p=document.getElementById('feedback-popup');
-  document.getElementById('feedback-icon').textContent=ok?'⭐':'💥';
+  var p=document.getElementById('feedback-popup');
+  document.getElementById('feedback-icon').textContent=ok?'🌟':'💥';
   document.getElementById('feedback-msg').textContent=msg;
   document.getElementById('feedback-msg').style.color=ok?'var(--green)':'var(--red)';
   document.getElementById('feedback-pts').textContent=pts>0?'+'+pts+' PTS':'';
-  p.style.borderColor=ok?'rgba(0,255,136,.3)':'rgba(255,51,85,.3)';
+  p.style.borderColor=ok?'rgba(52,211,153,.3)':'rgba(248,113,113,.3)';
   p.classList.add('show');
 }
 function hideFeedback(){document.getElementById('feedback-popup').classList.remove('show');}
 
-// ─── FLOAT SCORE ─────────────────────────────────────────
 function showFloatScore(txt,refEl,color){
-  const rect=refEl.getBoundingClientRect();
-  const el=document.createElement('div');
-  el.className='score-float';
-  el.textContent=txt;
-  el.style.cssText=`color:${color};left:${rect.left+rect.width/2-30}px;top:${rect.top-10}px;`;
-  document.body.appendChild(el);
-  el.addEventListener('animationend',()=>el.remove());
+  var rect=refEl.getBoundingClientRect();
+  var el=document.createElement('div');el.className='score-float';
+  el.textContent=txt;el.style.cssText='color:'+color+';left:'+(rect.left+rect.width/2-30)+'px;top:'+(rect.top-10)+'px;';
+  document.body.appendChild(el);el.addEventListener('animationend',function(){el.remove();});
 }
 
-// ─── PARTICLES ───────────────────────────────────────────
 function spawnParticles(el){
-  const rect=el.getBoundingClientRect();
-  const cx=rect.left+rect.width/2, cy=rect.top+rect.height/2;
-  const colors=['var(--neon)','var(--gold)','var(--neon2)','var(--green)','#fff'];
-  for(let i=0;i<22;i++){
-    const p=document.createElement('div');
-    const angle=Math.random()*Math.PI*2, dist=60+Math.random()*80;
-    const px=Math.cos(angle)*dist+'px', py=Math.sin(angle)*dist+'px';
-    const size=3+Math.random()*5;
+  var rect=el.getBoundingClientRect();
+  var cx=rect.left+rect.width/2,cy=rect.top+rect.height/2;
+  var colors=['var(--neon)','var(--gold)','var(--neon2)','var(--green)','#fff','#c4b5fd'];
+  for(var i=0;i<22;i++){
+    var p=document.createElement('div');
+    var angle=Math.random()*Math.PI*2,dist=60+Math.random()*80;
     p.className='particle';
-    p.style.cssText=`width:${size}px;height:${size}px;background:${colors[i%colors.length]};left:${cx}px;top:${cy}px;--px:${px};--py:${py};--pd:${.4+Math.random()*.5}s;`;
-    document.body.appendChild(p);
-    p.addEventListener('animationend',()=>p.remove());
+    p.style.cssText='width:'+(3+Math.random()*5)+'px;height:'+(3+Math.random()*5)+'px;background:'+colors[i%colors.length]+';left:'+cx+'px;top:'+cy+'px;--px:'+(Math.cos(angle)*dist)+'px;--py:'+(Math.sin(angle)*dist)+'px;--pd:'+(.4+Math.random()*.5)+'s;';
+    document.body.appendChild(p);p.addEventListener('animationend',function(){p.remove();});
   }
 }
 
-// ─── COMBO POP ───────────────────────────────────────────
-function popCombo(){
-  const el=document.getElementById('combo-display');
-  el.classList.remove('pop');
-  void el.offsetWidth;
-  el.classList.add('pop');
-  setTimeout(()=>el.classList.remove('pop'),200);
-}
+function popCombo(){var el=document.getElementById('combo-display');el.classList.remove('pop');void el.offsetWidth;el.classList.add('pop');setTimeout(function(){el.classList.remove('pop');},200);}
 
-// ─── END GAME ────────────────────────────────────────────
 function endGame(won){
   clearInterval(timerInterval);
   document.getElementById('hud').style.display='none';
   document.getElementById('progress-wrap').style.display='none';
-  if(won)sfxWin(); else sfxGameOver();
-  document.getElementById('end-icon').textContent=won?'🏆':'💀';
-  const titleEl=document.getElementById('end-title');
-  titleEl.textContent=won?'MISSÃO COMPLETA!':'GAME OVER';
+  if(won)sfxWin();else sfxGameOver();
+  document.getElementById('end-icon').textContent=won?'🚀':'🌑';
+  var titleEl=document.getElementById('end-title');
+  titleEl.textContent=won?'MISSAO COMPLETA!':'MISSAO ABORTADA';
   titleEl.className='end-title '+(won?'win':'lose');
   document.getElementById('end-score').textContent=score.toLocaleString();
   document.getElementById('r-correct').textContent=correct;
   document.getElementById('r-wrong').textContent=wrong+(3-lives);
-  document.getElementById('r-combo').textContent='×'+maxCombo;
-  // rank
-  let rank,rClass;
-  if(score>=2200){rank='S';rClass='rank-S';}
-  else if(score>=1700){rank='A';rClass='rank-A';}
-  else if(score>=1200){rank='B';rClass='rank-B';}
+  document.getElementById('r-combo').textContent='x'+maxCombo;
+  var rank,rClass;
+  if(score>=2800){rank='S';rClass='rank-S';}
+  else if(score>=2100){rank='A';rClass='rank-A';}
+  else if(score>=1400){rank='B';rClass='rank-B';}
   else if(score>=700){rank='C';rClass='rank-C';}
   else{rank='F';rClass='rank-F';}
-  document.getElementById('rank-badge-wrap').innerHTML=`<span class="rank-badge ${rClass}">RANK ${rank}</span>`;
-  // highscore
-  saveHS();
-  showHS();
-  showScreen('end-screen');
+  document.getElementById('rank-badge-wrap').innerHTML='<span class="rank-badge '+rClass+'">RANK '+rank+'</span>';
+  saveHS();showHS();showScreen('end-screen');
 }
 
-// ─── HIGHSCORES ──────────────────────────────────────────
 function saveHS(){
-  let hs=JSON.parse(localStorage.getItem('cwqHS')||'[]');
-  hs.push({pts:score,date:new Date().toLocaleDateString('pt-BR'),correct});
-  hs.sort((a,b)=>b.pts-a.pts);
-  hs=hs.slice(0,5);
-  localStorage.setItem('cwqHS',JSON.stringify(hs));
-}
-function showHS(){
-  const hs=JSON.parse(localStorage.getItem('cwqHS')||'[]');
-  const medals=['🥇','🥈','🥉','4️⃣','5️⃣'];
-  document.getElementById('hs-list').innerHTML=hs.map((h,i)=>`
-    <div class="hs-row"><span class="hs-rank">${medals[i]}</span><span>${h.date} — ${h.correct}/20 corretas</span><span class="hs-pts">${h.pts.toLocaleString()}</span></div>
-  `).join('')||'<div style="opacity:.4;font-size:13px;padding:8px">Nenhum recorde ainda.</div>';
+  var hs=JSON.parse(localStorage.getItem('cosmosqHS')||'[]');
+  hs.push({pts:score,date:new Date().toLocaleDateString('pt-BR'),correct:correct});
+  hs.sort(function(a,b){return b.pts-a.pts;});hs=hs.slice(0,5);
+  localStorage.setItem('cosmosqHS',JSON.stringify(hs));
 }
 
-// ─── RESTART ─────────────────────────────────────────────
-function restartGame(){
-  showScreen('intro');
+function showHS(){
+  var hs=JSON.parse(localStorage.getItem('cosmosqHS')||'[]');
+  var medals=['🥇','🥈','🥉','4️⃣','5️⃣'];
+  document.getElementById('hs-list').innerHTML=hs.map(function(h,i){
+    return '<div class="hs-row"><span class="hs-rank">'+medals[i]+'</span><span>'+h.date+' - '+h.correct+'/'+TOTAL+' corretas</span><span class="hs-pts">'+h.pts.toLocaleString()+'</span></div>';
+  }).join('')||'<div style="opacity:.4;font-size:13px;padding:8px">Nenhum recorde ainda.</div>';
 }
+
+function restartGame(){showScreen('intro');}
 </script>
 </body>
 </html>
